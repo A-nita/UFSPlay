@@ -1,0 +1,4 @@
+INSERT INTO usuarios VALUES ('66545678765', 'SnailThemi', 'mariaeugenia@gmail.com');
+\echo file ARQUIVO_USUARIOS
+\echo index usuarios_idx
+\q

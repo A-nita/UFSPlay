@@ -5,8 +5,8 @@
  *
  * Trabalho 01 - Indexação
  *
- * RA: 
- * Aluno: 
+ * RA: 790084
+ * Aluno: Maria Anita de Moura
  * ========================================================================== */
 
 /* Bibliotecas */
@@ -660,6 +660,7 @@ int main() {
 /* ========================================================================== */
 
 /* Cria o índice primário usuarios_idx */
+//todo
 void criar_usuarios_idx() {
     if (!usuarios_idx)
         usuarios_idx = malloc(MAX_REGISTROS * sizeof(usuarios_index));
@@ -786,7 +787,7 @@ Compra recuperar_registro_compra(int rrn) {
     printf(ERRO_NAO_IMPLEMENTADO, "recuperar_registro_compra");
 }
 
-
+//todo
 /* Escreve no arquivo de usuários na posição informada (RRN)
  * os dados na struct Usuario */
 void escrever_registro_usuario(Usuario u, int rrn) {
@@ -828,9 +829,23 @@ void escrever_registro_compra(Compra c, int rrn) {
 
 
 /* Funções principais */
+//todo
 void cadastrar_usuario_menu(char *id_user, char *username, char *email) {
+    //o id_user deve ser único se nao for : ERRO_PK_REPETIDA
+
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "cadastrar_usuario_menu");
+    Usuario u;
+    strcpy(u.id_user, id_user);
+    strcpy(u.username, username);
+    strcpy(u.email, email);
+    strcpy(u.celular, "***********");
+    u.saldo = 0;
+
+    escrever_registro_usuario(u, qtd_registros_usuarios++);
+
+    criar_usuarios_idx();
+
+    printf(SUCESSO);
 }
 
 void cadastrar_celular_menu(char* id_user, char* celular) {
@@ -993,7 +1008,9 @@ void imprimir_categorias_primario_idx_menu() {
 /* Liberar memória e encerrar programa */
 void liberar_memoria_menu() {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
+
     printf(ERRO_NAO_IMPLEMENTADO, "liberar_memoria_menu");
+    exit(8);
 }
 
 
@@ -1062,7 +1079,7 @@ char* strpadright(char *str, char pad, unsigned size) {
     return str;
 }
 
-
+//todo
 /* Funções da busca binária */
 void* busca_binaria(const void *key, const void *base0, size_t nmemb, size_t size, int (*compar)(const void *, const void *), bool exibir_caminho) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
