@@ -1,4 +1,5 @@
 INSERT INTO usuarios VALUES ('66545678765', 'SnailThemi', 'mariaeugenia@gmail.com');
-\echo file ARQUIVO_USUARIOS
-\echo index usuarios_idx
+INSERT INTO usuarios VALUES ('99876556782', 'ezPz#Fireclan', 'ga.augusto@gmail.com');
+INSERT INTO usuarios VALUES ('66545678765', 'qualquercoisa', 'eumesma@gmail.com');
+
 \q
