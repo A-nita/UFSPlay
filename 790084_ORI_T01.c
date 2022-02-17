@@ -877,8 +877,6 @@ void adicionar_saldo_menu(char *id_user, double valor) {
     }
     usuarios_index *resultadoBusca = (usuarios_index*) busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, false);
     if(resultadoBusca) {
-
-
         Usuario u = recuperar_registro_usuario(resultadoBusca->rrn);
         u.saldo += valor;
         escrever_registro_usuario(u, resultadoBusca->rrn);
@@ -903,9 +901,11 @@ void cadastrar_categoria_menu(char* titulo, char* categoria) {
 /* Busca */
 //todo SELECT * FROM usuarios WHERE id_user = '<id_user>';
 void buscar_usuario_id_user_menu(char *id_user) {
-    void* resultadoBusca = busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, true);
+    usuarios_index *resultadoBusca = (usuarios_index*) busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, true);
     if (resultadoBusca) {
-
+        Usuario u = recuperar_registro_usuario(resultadoBusca->rrn);
+        printf("%s, %s, %s, %s, %.2lf\n", u.id_user, u.username, u.email, u.celular, u.saldo);
+        return;
     }
     printf(ERRO_REGISTRO_NAO_ENCONTRADO);
 }
@@ -925,7 +925,13 @@ void buscar_jogo_titulo_menu(char *titulo) {
 //todo
 void listar_usuarios_id_user_menu() {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "listar_usuarios_id_user_menu");
+    if(!qtd_registros_usuarios) {
+        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+    }
+    for (int i = 0; i < qtd_registros_usuarios; ++i) {
+        Usuario u = recuperar_registro_usuario(i);
+        printf("%s, %s, %s, %s, %.2lf\n", u.id_user, u.username, u.email, u.celular, u.saldo);
+    }
 }
 
 void listar_jogos_categorias_menu(char *categoria) {
