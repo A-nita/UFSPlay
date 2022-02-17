@@ -519,13 +519,13 @@ void* busca_binaria_piso(const void* key, void* base, size_t num, size_t size, i
 void* busca_binaria_teto(const void* key, void* base, size_t num, size_t size, int (*compar)(const void*,const void*));
 
 /* <<< COLOQUE AQUI OS DEMAIS PROTÓTIPOS DE FUNÇÕES, SE NECESSÁRIO >>> */
-int buscar_usuario_id_user(char *id_user) {
-    int resultado = busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, true);
-    if(!resultado) {
-        return -1;
-    }
-    return resultado;
-}
+//int buscar_usuario_id_user(char *id_user) {
+//    int resultado = busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, true);
+//    if(!resultado) {
+//        return -1;
+//    }
+//    return resultado;
+//}
 
 /* ==========================================================================
  * ============================ FUNÇÃO PRINCIPAL ============================
@@ -666,7 +666,7 @@ int main() {
 /* ========================================================================== */
 
 /* Cria o índice primário usuarios_idx */
-//todo
+
 void criar_usuarios_idx() {
     if (!usuarios_idx)
         usuarios_idx = malloc(MAX_REGISTROS * sizeof(usuarios_index));
@@ -793,9 +793,6 @@ Compra recuperar_registro_compra(int rrn) {
     printf(ERRO_NAO_IMPLEMENTADO, "recuperar_registro_compra");
 }
 
-//todo
-/* Escreve no arquivo de usuários na posição informada (RRN)
- * os dados na struct Usuario */
 void escrever_registro_usuario(Usuario u, int rrn) {
     char temp[TAM_REGISTRO_USUARIO + 1], p[100];
     temp[0] = '\0'; p[0] = '\0';
@@ -835,7 +832,6 @@ void escrever_registro_compra(Compra c, int rrn) {
 
 
 /* Funções principais */
-//todo
 void cadastrar_usuario_menu(char *id_user, char *username, char *email) {
 
     if(busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, false)) {
@@ -872,9 +868,25 @@ void cadastrar_jogo_menu(char *titulo, char *desenvolvedor, char *editora, char*
     printf(ERRO_NAO_IMPLEMENTADO, "cadastrar_jogo_menu");
 }
 
+
 void adicionar_saldo_menu(char *id_user, double valor) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "adicionar_saldo_menu");
+    if(valor <= 0) {
+        printf(ERRO_VALOR_INVALIDO);
+        return;
+    }
+    usuarios_index *resultadoBusca = (usuarios_index*) busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, false);
+    if(resultadoBusca) {
+
+
+        Usuario u = recuperar_registro_usuario(resultadoBusca->rrn);
+        u.saldo += valor;
+        escrever_registro_usuario(u, resultadoBusca->rrn);
+        printf(SUCESSO);
+        return;
+    }
+
+    printf(ERRO_REGISTRO_NAO_ENCONTRADO);
 }
 
 void comprar_menu(char *id_user, char *titulo) {
@@ -888,10 +900,14 @@ void cadastrar_categoria_menu(char* titulo, char* categoria) {
 }
 
 
-/* Busca todo*/
+/* Busca */
+//todo SELECT * FROM usuarios WHERE id_user = '<id_user>';
 void buscar_usuario_id_user_menu(char *id_user) {
-    /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "buscar_usuario_id_user_menu");
+    void* resultadoBusca = busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, true);
+    if (resultadoBusca) {
+
+    }
+    printf(ERRO_REGISTRO_NAO_ENCONTRADO);
 }
 
 void buscar_jogo_id_menu(char *id_game) {
@@ -906,6 +922,7 @@ void buscar_jogo_titulo_menu(char *titulo) {
 
 
 /* Listagem */
+//todo
 void listar_usuarios_id_user_menu() {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     printf(ERRO_NAO_IMPLEMENTADO, "listar_usuarios_id_user_menu");
@@ -1015,11 +1032,15 @@ void imprimir_categorias_primario_idx_menu() {
 
 
 /* Liberar memória e encerrar programa */
+//todo liberar memoria dos outros index
 void liberar_memoria_menu() {
-    /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-
-    printf(ERRO_NAO_IMPLEMENTADO, "liberar_memoria_menu");
-    exit(8);
+    free(usuarios_idx);
+    free(jogos_idx);
+    free(compras_idx);
+    free(titulo_idx);
+    free(data_user_game_idx);
+    //inverted list
+    exit(0);
 }
 
 
@@ -1080,7 +1101,6 @@ int inverted_list_primary_search(char result[][TAM_CHAVE_CATEGORIAS_PRIMARIO_IDX
     printf(ERRO_NAO_IMPLEMENTADO, "inverted_list_primary_search");
 }
 
-
 char* strpadright(char *str, char pad, unsigned size) {
     for (unsigned i = strlen(str); i < size; ++i)
         str[i] = pad;
@@ -1088,16 +1108,6 @@ char* strpadright(char *str, char pad, unsigned size) {
     return str;
 }
 
-//todo
-/* Funções da busca binária
-* @param key Chave de busca genérica.
-* @param base0 Base onde ocorrerá a busca, por exemplo, um ponteiro para um vetor.
-* @param nmemb Número de elementos na base.
-* @param size Tamanho do tipo do elemento na base, dica: utilize a função sizeof().
-* @param compar Ponteiro para a função que será utilizada nas comparações.
-* @param exibir_caminho Indica se o caminho percorrido deve ser impresso.
-* @return Retorna o elemento encontrado ou NULL se não encontrou.
- * */
 void* busca_binaria(const void *key, const void *base0, size_t nmemb, size_t size, int (*compar)(const void *, const void *), bool exibir_caminho) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     const char *base = (const char*) base0;
@@ -1113,6 +1123,7 @@ void* busca_binaria(const void *key, const void *base0, size_t nmemb, size_t siz
         cmp = (*compar)(key, p);
 
         if(cmp == 0) {
+            //printf("ACHEU!!!\n");
             return (void *) p;
         }
         if(cmp > 0) {//move para a direita
@@ -1121,7 +1132,6 @@ void* busca_binaria(const void *key, const void *base0, size_t nmemb, size_t siz
             //impressao
         }
         //move pra esquerda
-
 
     }
     return (NULL);
