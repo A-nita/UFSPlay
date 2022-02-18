@@ -903,8 +903,7 @@ void cadastrar_categoria_menu(char* titulo, char* categoria) {
 void buscar_usuario_id_user_menu(char *id_user) {
     usuarios_index *resultadoBusca = (usuarios_index*) busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, true);
     if (resultadoBusca) {
-        Usuario u = recuperar_registro_usuario(resultadoBusca->rrn);
-        printf("%s, %s, %s, %s, %.2lf\n", u.id_user, u.username, u.email, u.celular, u.saldo);
+        exibir_usuario(resultadoBusca->rrn);
         return;
     }
     printf(ERRO_REGISTRO_NAO_ENCONTRADO);
@@ -930,8 +929,7 @@ void listar_usuarios_id_user_menu() {
     }
 
     for (int i = 0; i < qtd_registros_usuarios; ++i) {
-        Usuario u = recuperar_registro_usuario(usuarios_idx[i].rrn);
-        printf("%s, %s, %s, %s, %.2lf\n", u.id_user, u.username, u.email, u.celular, u.saldo);
+        exibir_usuario(usuarios_idx[i].rrn);
     }
 }
 
