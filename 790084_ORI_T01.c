@@ -573,11 +573,11 @@ int main() {
     set_time(time);
 
     criar_usuarios_idx();
-    criar_jogos_idx();
-    criar_compras_idx();
-    criar_titulo_idx();
-    criar_data_user_game_idx();
-    criar_categorias_idx();
+//    criar_jogos_idx();
+//    criar_compras_idx();
+//    criar_titulo_idx();
+//    criar_data_user_game_idx();
+//    criar_categorias_idx();
 
     while (1) {
         fgets(input, 500, stdin);
@@ -928,8 +928,9 @@ void listar_usuarios_id_user_menu() {
     if(!qtd_registros_usuarios) {
         printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
     }
+
     for (int i = 0; i < qtd_registros_usuarios; ++i) {
-        Usuario u = recuperar_registro_usuario(i);
+        Usuario u = recuperar_registro_usuario(usuarios_idx[i].rrn);
         printf("%s, %s, %s, %s, %.2lf\n", u.id_user, u.username, u.email, u.celular, u.saldo);
     }
 }
