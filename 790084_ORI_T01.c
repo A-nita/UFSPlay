@@ -573,9 +573,9 @@ int main() {
     set_time(time);
 
     criar_usuarios_idx();
-//    criar_jogos_idx();
+   criar_jogos_idx();
 //    criar_compras_idx();
-//    criar_titulo_idx();
+    criar_titulo_idx();
 //    criar_data_user_game_idx();
 //    criar_categorias_idx();
 
@@ -691,9 +691,27 @@ void criar_usuarios_idx() {
 }
 
 /* Cria o índice primário jogos_idx */
+//todo
 void criar_jogos_idx() {
-    /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "criar_jogos_idx");
+    if(!jogos_idx) {
+        jogos_idx = malloc(MAX_REGISTROS * sizeof(jogos_index));
+    }
+    if (!jogos_idx) {
+        printf(ERRO_MEMORIA_INSUFICIENTE);
+        exit(1);
+    }
+    for (unsigned i = 0; i < qtd_registros_jogos; ++i) {
+        Jogo j = recuperar_registro_jogo(i);
+
+        if (strncmp(j.id_game, "*|", 2) == 0)
+            jogos_idx[i].rrn = -1; // registro excluído
+        else
+            jogos_idx[i].rrn = i;
+
+        strcpy(jogos_idx[i].id_game, j.id_game);
+    }
+    qsort(jogos_idx, qtd_registros_jogos, sizeof(jogos_index), qsort_jogos_idx);
+
 }
 
 /* Cria o índice primário compras_idx */
@@ -703,9 +721,24 @@ void criar_compras_idx() {
 }
 
 /* Cria o índice secundário titulo_idx */
+//todo
 void criar_titulo_idx() {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "criar_titulo_idx");
+    if(!titulo_idx) {
+        titulo_idx = malloc(MAX_REGISTROS * sizeof(titulos_index));
+    }
+    if (!titulo_idx) {
+        printf(ERRO_MEMORIA_INSUFICIENTE);
+        exit(1);
+    }
+    for (unsigned i = 0; i < qtd_registros_jogos; ++i) {
+        Jogo j = recuperar_registro_jogo(i);
+
+        strcpy(titulo_idx[i].titulo, j.titulo);
+
+        strcpy(jogos_idx[i].id_game, j.id_game);
+    }
+    qsort(titulo_idx, qtd_registros_jogos, sizeof(titulos_index), qsort_titulo_idx);
 }
 
 /* Cria o índice secundário data_user_game_idx */
@@ -781,9 +814,40 @@ Usuario recuperar_registro_usuario(int rrn) {
 
 /* Recupera do arquivo de jogos o registro com o RRN
  * informado e retorna os dados na struct Jogo */
+//todo
 Jogo recuperar_registro_jogo(int rrn) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "recuperar_registro_jogo");
+    Jogo j;
+    char temp[TAM_REGISTRO_JOGO + 1], *p, *categorias;
+    strncpy(temp, ARQUIVO_JOGOS + (rrn * TAM_REGISTRO_JOGO), TAM_REGISTRO_JOGO);
+    temp[TAM_REGISTRO_JOGO] = '\0';
+
+    p = strtok(temp, ";");
+    strcpy(j.id_game, p);
+    p = strcpy(NULL, ";");
+    strcpy(j.titulo, p);
+    p = strcpy(NULL, ";");
+    strcpy(j.desenvolvedor, p);
+    p = strcpy(NULL, ";");
+    strcpy(j.editora, p);
+    p = strcpy(NULL, ";");
+    strcpy(j.data_lancamento, p);
+    p = strcpy(NULL, ";");
+    j.preco = atof(p);
+    p = strcpy(NULL, "|");
+    strcpy(categorias, p);
+    p = strtok(NULL, ";");
+
+    p = strtok(categorias, "|");
+    strcpy(j.categorias[0], "|");
+    p = strtok(NULL, "|");
+    strcpy(j.categorias[1], "|");
+    p = strtok(NULL, "|");
+    strcpy(j.categorias[2], "|");
+    p = strtok(NULL, "|");
+
+    return j;
+
 }
 
 /* Recupera do arquivo de compras o registro com o RRN
@@ -818,9 +882,30 @@ void escrever_registro_usuario(Usuario u, int rrn) {
 
 /* Escreve no arquivo de jogos na posição informada (RRN)
  * os dados na struct Jogo */
+//todo
 void escrever_registro_jogo(Jogo j, int rrn) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "escrever_registro_jogo");
+
+    char temp[TAM_REGISTRO_JOGO + 1], p[100];
+    temp[0] = '\0'; p[0] = '\0';
+    strcpy(temp, j.id_game);
+    strcat(temp, ";");
+    strcat(temp, j.titulo);
+    strcat(temp, ";");
+    strcat(temp, j.desenvolvedor);
+    strcat(temp, ";");
+    strcat(temp, j.editora);
+    strcat(temp, ";");
+    strcat(temp, j.data_lancamento);
+    strcat(temp, ";");
+    sprintf(p, "%013.2lf", j.preco);
+    strcat(temp, p);
+    strcat(temp, ";;");
+
+    strpadright(temp, '#', TAM_REGISTRO_JOGO);
+
+    strncpy(ARQUIVO_JOGOS + rrn*TAM_REGISTRO_JOGO, temp, TAM_REGISTRO_JOGO);
+    ARQUIVO_JOGOS[qtd_registros_jogos*TAM_REGISTRO_JOGO] = '\0';
 }
 
 /* Escreve no arquivo de compras na posição informada (RRN)
@@ -833,12 +918,12 @@ void escrever_registro_compra(Compra c, int rrn) {
 
 /* Funções principais */
 void cadastrar_usuario_menu(char *id_user, char *username, char *email) {
-
+/* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     if(busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, false)) {
         printf(ERRO_PK_REPETIDA, id_user);
         return;
     }
-    /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
+
     Usuario u;
     strcpy(u.id_user, id_user);
     strcpy(u.username, username);
@@ -847,12 +932,10 @@ void cadastrar_usuario_menu(char *id_user, char *username, char *email) {
     u.saldo = 0;
 
     escrever_registro_usuario(u, qtd_registros_usuarios++);
-
     criar_usuarios_idx();
-
     printf(SUCESSO);
 }
-//todo
+
 void cadastrar_celular_menu(char* id_user, char* celular) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     usuarios_index *resultadoBusca = (usuarios_index*) busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, false);
@@ -871,10 +954,27 @@ void remover_usuario_menu(char *id_user) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     printf(ERRO_NAO_IMPLEMENTADO, "remover_usuario_menu");
 }
-
+//todo
 void cadastrar_jogo_menu(char *titulo, char *desenvolvedor, char *editora, char* lancamento, double preco) {
-    /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "cadastrar_jogo_menu");
+/* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
+    if(busca_binaria(titulo, titulo_idx, qtd_registros_jogos, sizeof(*titulo_idx), qsort_titulo_idx, false)) {
+        printf(ERRO_PK_REPETIDA, titulo);
+        return;
+    }
+
+    Jogo j;
+    //sprintf(j.id_game, "%08d", qtd_registros_jogos);
+    strcpy(j.id_game, "00000000");
+    strcpy(j.titulo, titulo);
+    strcpy(j.desenvolvedor, desenvolvedor);
+    strcpy(j.editora, editora);
+    strcpy(j.data_lancamento, lancamento);
+    j.preco = preco;
+
+    escrever_registro_jogo(j, qtd_registros_jogos++);
+    //criar_jogos_idx();
+    //criar_titulo_idx();
+    printf(SUCESSO);
 }
 
 
@@ -908,7 +1008,7 @@ void cadastrar_categoria_menu(char* titulo, char* categoria) {
 
 
 /* Busca */
-//todo SELECT * FROM usuarios WHERE id_user = '<id_user>';
+
 void buscar_usuario_id_user_menu(char *id_user) {
     usuarios_index *resultadoBusca = (usuarios_index*) busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, true);
     if (resultadoBusca) {
@@ -920,7 +1020,12 @@ void buscar_usuario_id_user_menu(char *id_user) {
 
 void buscar_jogo_id_menu(char *id_game) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "buscar_jogo_id_menu");
+    jogos_index *resultadoBusca = (jogos_index*) busca_binaria(id_game, jogos_idx, qtd_registros_jogos, sizeof(*jogos_idx), qsort_jogos_idx, true);
+    if (resultadoBusca) {
+        exibir_jogo(resultadoBusca->rrn);
+        return;
+    }
+    printf(ERRO_REGISTRO_NAO_ENCONTRADO);
 }
 
 void buscar_jogo_titulo_menu(char *titulo) {
@@ -930,7 +1035,7 @@ void buscar_jogo_titulo_menu(char *titulo) {
 
 
 /* Listagem */
-//todo
+
 void listar_usuarios_id_user_menu() {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     if(!qtd_registros_usuarios) {
@@ -1066,7 +1171,7 @@ int qsort_usuarios_idx(const void *a, const void *b) {
 /* Função de comparação entre chaves do índice jogos_idx */
 int qsort_jogos_idx(const void *a, const void *b) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "qsort_jogos_idx");
+    return strcmp( ( (jogos_index *)a )->id_game, ( (jogos_index *)b )->id_game);
 }
 
 /* Função de comparação entre chaves do índice compras_idx */
@@ -1078,7 +1183,7 @@ int qsort_compras_idx(const void *a, const void *b) {
 /* Função de comparação entre chaves do índice titulo_idx */
 int qsort_titulo_idx(const void *a, const void *b) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "qsort_titulo_idx");
+    return strcmp( ( (titulos_index *)a )->titulo, ( (titulos_index *)b )->titulo);
 }
 
 /* Funções de comparação entre chaves do índice data_user_game_idx */
