@@ -852,10 +852,19 @@ void cadastrar_usuario_menu(char *id_user, char *username, char *email) {
 
     printf(SUCESSO);
 }
-
+//todo
 void cadastrar_celular_menu(char* id_user, char* celular) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "cadastrar_celular_menu");
+    usuarios_index *resultadoBusca = (usuarios_index*) busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, false);
+    if(resultadoBusca) {
+        Usuario u = recuperar_registro_usuario(resultadoBusca->rrn);
+        strcpy(u.celular, celular);
+        escrever_registro_usuario(u, resultadoBusca->rrn);
+        printf(SUCESSO);
+        return;
+    }
+
+    printf(ERRO_REGISTRO_NAO_ENCONTRADO);
 }
 
 void remover_usuario_menu(char *id_user) {
