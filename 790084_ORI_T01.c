@@ -1030,7 +1030,14 @@ void buscar_jogo_id_menu(char *id_game) {
 
 void buscar_jogo_titulo_menu(char *titulo) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "buscar_jogo_titulo_menu");
+    Jogo j;
+
+    titulos_index *resultadoBusca = (titulos_index*) busca_binaria(titulo, titulo_idx, qtd_registros_jogos, sizeof(*titulo_idx), qsort_titulo_idx, true);
+    if (resultadoBusca) {
+        buscar_jogo_id_menu(resultadoBusca->id_game);
+        return;
+    }
+    printf(ERRO_REGISTRO_NAO_ENCONTRADO);
 }
 
 
@@ -1229,27 +1236,36 @@ char* strpadright(char *str, char pad, unsigned size) {
 
 void* busca_binaria(const void *key, const void *base0, size_t nmemb, size_t size, int (*compar)(const void *, const void *), bool exibir_caminho) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    const char *base = (const char*) base0;
+    const void *base =  base0;
     int lim, cmp;
     const void *p;
+    if(exibir_caminho) {
+        printf("Registros percorridos:");
+    }
+
     for (lim = (int)nmemb; lim != 0 ; lim = lim/2) { //move o cabeçote para a direta, dividindo por 2 >>= 1
         p = base + (lim / 2) * size; //meio do vetor
-        int rrn =(lim/2);
+        int rrn = (p - base0)/size;
         if(exibir_caminho) {
-            printf("%d ",rrn); //como que eu vou imprimir o rrn se o tipo de dado é abstrato
+            printf(" %d",rrn); //como que eu vou imprimir o rrn se o tipo de dado é abstrato
         }
 
         cmp = (*compar)(key, p);
 
         if(cmp == 0) {
-            //printf("ACHEU!!!\n");
+            if(exibir_caminho) {
+                printf("\n");
+            }
             return (void *) p;
         }
         if(cmp > 0) {//move para a direita
-            base = (const char *)p + size;
+            base = p + size;
             lim--;
         }
         //move pra esquerda
+    }
+    if(exibir_caminho) {
+        printf("\n");
     }
     return NULL;
 }
