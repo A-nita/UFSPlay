@@ -519,13 +519,11 @@ void* busca_binaria_piso(const void* key, void* base, size_t num, size_t size, i
 void* busca_binaria_teto(const void* key, void* base, size_t num, size_t size, int (*compar)(const void*,const void*));
 
 /* <<< COLOQUE AQUI OS DEMAIS PROTÓTIPOS DE FUNÇÕES, SE NECESSÁRIO >>> */
-//int buscar_usuario_id_user(char *id_user) {
-//    int resultado = busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, true);
-//    if(!resultado) {
-//        return -1;
-//    }
-//    return resultado;
-//}
+//atualiza o index ao inserir um novo usuario
+void novo_usuarios_idx();
+
+void novo_jogos_idx();
+
 
 /* ==========================================================================
  * ============================ FUNÇÃO PRINCIPAL ============================
@@ -727,7 +725,7 @@ void criar_titulo_idx() {
     if(!titulo_idx) {
         titulo_idx = malloc(MAX_REGISTROS * sizeof(titulos_index));
     }
-    if (!titulo_idx) {
+    if(!titulo_idx) {
         printf(ERRO_MEMORIA_INSUFICIENTE);
         exit(1);
     }
@@ -736,7 +734,7 @@ void criar_titulo_idx() {
 
         strcpy(titulo_idx[i].titulo, j.titulo);
 
-        strcpy(jogos_idx[i].id_game, j.id_game);
+        strcpy(titulo_idx[i].id_game, j.id_game);
     }
     qsort(titulo_idx, qtd_registros_jogos, sizeof(titulos_index), qsort_titulo_idx);
 }
@@ -824,27 +822,28 @@ Jogo recuperar_registro_jogo(int rrn) {
 
     p = strtok(temp, ";");
     strcpy(j.id_game, p);
-    p = strcpy(NULL, ";");
+    p = strtok(NULL, ";");
     strcpy(j.titulo, p);
-    p = strcpy(NULL, ";");
+    p = strtok(NULL, ";");
     strcpy(j.desenvolvedor, p);
-    p = strcpy(NULL, ";");
+    p = strtok(NULL, ";");
     strcpy(j.editora, p);
-    p = strcpy(NULL, ";");
+    p = strtok(NULL, ";");
     strcpy(j.data_lancamento, p);
-    p = strcpy(NULL, ";");
+    p = strtok(NULL, ";");
     j.preco = atof(p);
-    p = strcpy(NULL, "|");
-    strcpy(categorias, p);
+    p = strtok(NULL, ";");
+    strcpy(j.categorias, p);
+    //strcpy(categorias, p);
     p = strtok(NULL, ";");
 
-    p = strtok(categorias, "|");
-    strcpy(j.categorias[0], "|");
-    p = strtok(NULL, "|");
-    strcpy(j.categorias[1], "|");
-    p = strtok(NULL, "|");
-    strcpy(j.categorias[2], "|");
-    p = strtok(NULL, "|");
+//    p = strtok(categorias, "|");
+//    strcpy(j.categorias[0], "|");
+//    p = strtok(NULL, "|");
+//    strcpy(j.categorias[1], "|");
+//    p = strtok(NULL, "|");
+//    strcpy(j.categorias[2], "|");
+//    p = strtok(NULL, "|");
 
     return j;
 
@@ -932,7 +931,7 @@ void cadastrar_usuario_menu(char *id_user, char *username, char *email) {
     u.saldo = 0;
 
     escrever_registro_usuario(u, qtd_registros_usuarios++);
-    criar_usuarios_idx();
+    novo_usuarios_idx();
     printf(SUCESSO);
 }
 
@@ -963,8 +962,7 @@ void cadastrar_jogo_menu(char *titulo, char *desenvolvedor, char *editora, char*
     }
 
     Jogo j;
-    //sprintf(j.id_game, "%08d", qtd_registros_jogos);
-    strcpy(j.id_game, "00000000");
+    sprintf(j.id_game, "%08d", qtd_registros_jogos);
     strcpy(j.titulo, titulo);
     strcpy(j.desenvolvedor, desenvolvedor);
     strcpy(j.editora, editora);
@@ -972,8 +970,8 @@ void cadastrar_jogo_menu(char *titulo, char *desenvolvedor, char *editora, char*
     j.preco = preco;
 
     escrever_registro_jogo(j, qtd_registros_jogos++);
-    //criar_jogos_idx();
-    //criar_titulo_idx();
+    criar_jogos_idx();
+    criar_titulo_idx();
     printf(SUCESSO);
 }
 
@@ -1155,9 +1153,9 @@ void imprimir_categorias_primario_idx_menu() {
 void liberar_memoria_menu() {
     free(usuarios_idx);
     free(jogos_idx);
-    free(compras_idx);
+    //free(compras_idx);
     free(titulo_idx);
-    free(data_user_game_idx);
+   // free(data_user_game_idx);
     //inverted list
     exit(0);
 }
@@ -1232,7 +1230,7 @@ void* busca_binaria(const void *key, const void *base0, size_t nmemb, size_t siz
     const char *base = (const char*) base0;
     int lim, cmp;
     const void *p;
-    for (lim = (int)nmemb; lim != 0 ; lim >>= 1) {
+    for (lim = (int)nmemb; lim != 0 ; lim >>= 1) { //move o cabeçote para a direta, dividindo por 2
         p = base + (lim / 2) * size; //meio do vetor
         int rrn =(lim/2);
         if(exibir_caminho) {
@@ -1248,13 +1246,10 @@ void* busca_binaria(const void *key, const void *base0, size_t nmemb, size_t siz
         if(cmp > 0) {//move para a direita
             base = (const char *)p + size;
             lim--;
-            //impressao
         }
         //move pra esquerda
-
     }
-    return (NULL);
-
+    return NULL;
 }
 
 void* busca_binaria_piso(const void* key, void* base, size_t num, size_t size, int (*compar)(const void*,const void*)) {
@@ -1265,4 +1260,13 @@ void* busca_binaria_piso(const void* key, void* base, size_t num, size_t size, i
 void* busca_binaria_teto(const void* key, void* base, size_t num, size_t size, int (*compar)(const void*,const void*)) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     printf(ERRO_NAO_IMPLEMENTADO, "busca_binaria_teto");
+}
+
+void novo_usuarios_idx() {
+
+    Usuario u = recuperar_registro_usuario(qtd_registros_usuarios-1);
+    strcpy(usuarios_idx[qtd_registros_usuarios-1].id_user, u.id_user);
+    usuarios_idx[qtd_registros_usuarios-1].rrn = qtd_registros_usuarios-1;
+
+    qsort(usuarios_idx, qtd_registros_usuarios, sizeof(usuarios_index), qsort_usuarios_idx);
 }
