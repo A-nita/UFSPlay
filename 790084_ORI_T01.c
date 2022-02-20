@@ -324,10 +324,10 @@ void clear_input(char *str) {
 /* Cria o índice respectivo */
 void criar_usuarios_idx();
 void criar_jogos_idx();
-void criar_compras_idx();
+//void criar_compras_idx();
 void criar_titulo_idx();
-void criar_data_user_game_idx();
-void criar_categorias_idx();
+//void criar_data_user_game_idx();
+//void criar_categorias_idx();
 
 /* Exibe um registro com base no RRN */
 bool exibir_usuario(int rrn);
@@ -523,6 +523,8 @@ void* busca_binaria_teto(const void* key, void* base, size_t num, size_t size, i
 void novo_usuarios_idx();
 
 void novo_jogos_idx();
+
+void novo_titulo_idx();
 
 
 /* ==========================================================================
@@ -970,8 +972,8 @@ void cadastrar_jogo_menu(char *titulo, char *desenvolvedor, char *editora, char*
     j.preco = preco;
 
     escrever_registro_jogo(j, qtd_registros_jogos++);
-    criar_jogos_idx();
-    criar_titulo_idx();
+    novo_jogos_idx();
+    novo_titulo_idx();
     printf(SUCESSO);
 }
 
@@ -1153,9 +1155,9 @@ void imprimir_categorias_primario_idx_menu() {
 void liberar_memoria_menu() {
     free(usuarios_idx);
     free(jogos_idx);
-    //free(compras_idx);
+    free(compras_idx);
     free(titulo_idx);
-   // free(data_user_game_idx);
+    free(data_user_game_idx);
     //inverted list
     exit(0);
 }
@@ -1280,5 +1282,19 @@ void novo_jogos_idx() {
     jogos_idx[rrn].rrn = rrn;
 
     qsort(jogos_idx, qtd_registros_jogos, sizeof(jogos_index), qsort_jogos_idx);
+
+}
+
+void novo_titulo_idx() {
+    /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
+    int rrn = qtd_registros_jogos -1;
+
+    Jogo j = recuperar_registro_jogo(rrn);
+
+    strcpy(titulo_idx[rrn].titulo, j.titulo);
+
+    strcpy(titulo_idx[rrn].id_game, j.id_game);
+
+    qsort(titulo_idx, qtd_registros_jogos, sizeof(titulos_index), qsort_titulo_idx);
 
 }
