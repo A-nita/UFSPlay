@@ -1270,3 +1270,15 @@ void novo_usuarios_idx() {
 
     qsort(usuarios_idx, qtd_registros_usuarios, sizeof(usuarios_index), qsort_usuarios_idx);
 }
+
+void novo_jogos_idx() {
+
+    int rrn = qtd_registros_jogos-1;
+    Jogo j = recuperar_registro_jogo(rrn);
+
+    strcpy(jogos_idx[rrn].id_game, j.id_game);
+    jogos_idx[rrn].rrn = rrn;
+
+    qsort(jogos_idx, qtd_registros_jogos, sizeof(jogos_index), qsort_jogos_idx);
+
+}
