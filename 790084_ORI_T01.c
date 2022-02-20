@@ -324,10 +324,10 @@ void clear_input(char *str) {
 /* Cria o índice respectivo */
 void criar_usuarios_idx();
 void criar_jogos_idx();
-//void criar_compras_idx();
+void criar_compras_idx();
 void criar_titulo_idx();
-//void criar_data_user_game_idx();
-//void criar_categorias_idx();
+void criar_data_user_game_idx();
+void criar_categorias_idx();
 
 /* Exibe um registro com base no RRN */
 bool exibir_usuario(int rrn);
@@ -834,10 +834,10 @@ Jogo recuperar_registro_jogo(int rrn) {
     strcpy(j.data_lancamento, p);
     p = strtok(NULL, ";");
     j.preco = atof(p);
-    p = strtok(NULL, ";");
-    strcpy(j.categorias, p);
+//    p = strtok(NULL, ";");
+//    strcpy(j.categorias, p);
     //strcpy(categorias, p);
-    p = strtok(NULL, ";");
+//    p = strtok(NULL, ";");
 
 //    p = strtok(categorias, "|");
 //    strcpy(j.categorias[0], "|");
@@ -1153,11 +1153,11 @@ void imprimir_categorias_primario_idx_menu() {
 /* Liberar memória e encerrar programa */
 //todo liberar memoria dos outros index
 void liberar_memoria_menu() {
-    free(usuarios_idx);
-    free(jogos_idx);
-    free(compras_idx);
-    free(titulo_idx);
-    free(data_user_game_idx);
+//    free(usuarios_idx);
+//    free(jogos_idx);
+    //free(compras_idx);
+//    free(titulo_idx);
+    //free(data_user_game_idx);
     //inverted list
     exit(0);
 }
@@ -1232,7 +1232,7 @@ void* busca_binaria(const void *key, const void *base0, size_t nmemb, size_t siz
     const char *base = (const char*) base0;
     int lim, cmp;
     const void *p;
-    for (lim = (int)nmemb; lim != 0 ; lim >>= 1) { //move o cabeçote para a direta, dividindo por 2
+    for (lim = (int)nmemb; lim != 0 ; lim = lim/2) { //move o cabeçote para a direta, dividindo por 2 >>= 1
         p = base + (lim / 2) * size; //meio do vetor
         int rrn =(lim/2);
         if(exibir_caminho) {
