@@ -691,7 +691,6 @@ void criar_usuarios_idx() {
 }
 
 /* Cria o índice primário jogos_idx */
-//todo
 void criar_jogos_idx() {
     if(!jogos_idx) {
         jogos_idx = malloc(MAX_REGISTROS * sizeof(jogos_index));
@@ -721,7 +720,6 @@ void criar_compras_idx() {
 }
 
 /* Cria o índice secundário titulo_idx */
-//todo
 void criar_titulo_idx() {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     if(!titulo_idx) {
@@ -814,7 +812,7 @@ Usuario recuperar_registro_usuario(int rrn) {
 
 /* Recupera do arquivo de jogos o registro com o RRN
  * informado e retorna os dados na struct Jogo */
-//todo
+
 Jogo recuperar_registro_jogo(int rrn) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     Jogo j;
@@ -883,7 +881,7 @@ void escrever_registro_usuario(Usuario u, int rrn) {
 
 /* Escreve no arquivo de jogos na posição informada (RRN)
  * os dados na struct Jogo */
-//todo
+
 void escrever_registro_jogo(Jogo j, int rrn) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
 
@@ -950,12 +948,25 @@ void cadastrar_celular_menu(char* id_user, char* celular) {
 
     printf(ERRO_REGISTRO_NAO_ENCONTRADO);
 }
-
+//todo
 void remover_usuario_menu(char *id_user) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "remover_usuario_menu");
+    usuarios_index *resultadoBusca = (usuarios_index*) busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, false);
+    if(resultadoBusca) {
+//        int bytesOfSet = resultadoBusca->rrn * TAM_REGISTRO_USUARIO;
+        Usuario u =  recuperar_registro_usuario(resultadoBusca->rrn);
+//        char* excluido = "*|";
+        u.id_user[0] = '*';
+        u.id_user[0] = '|';
+        escrever_registro_usuario(u, resultadoBusca->rrn);
+
+
+        resultadoBusca->rrn = -1;
+        return;
+    }
+    printf(ERRO_REGISTRO_NAO_ENCONTRADO);
 }
-//todo
+
 void cadastrar_jogo_menu(char *titulo, char *desenvolvedor, char *editora, char* lancamento, double preco) {
 /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     if(busca_binaria(titulo, titulo_idx, qtd_registros_jogos, sizeof(*titulo_idx), qsort_titulo_idx, false)) {
