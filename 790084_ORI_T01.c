@@ -520,7 +520,7 @@ void* busca_binaria_teto(const void* key, void* base, size_t num, size_t size, i
 
 /* <<< COLOQUE AQUI OS DEMAIS PROTÓTIPOS DE FUNÇÕES, SE NECESSÁRIO >>> */
 //atualiza o index ao inserir um novo usuario
-void novo_usuarios_idx();
+void novo_usuarios_idx(int rrn);
 
 void novo_jogos_idx();
 
@@ -931,7 +931,7 @@ void cadastrar_usuario_menu(char *id_user, char *username, char *email) {
     u.saldo = 0;
 
     escrever_registro_usuario(u, qtd_registros_usuarios++);
-    novo_usuarios_idx();
+    novo_usuarios_idx(qtd_registros_usuarios-1);
     printf(SUCESSO);
 }
 
@@ -948,20 +948,16 @@ void cadastrar_celular_menu(char* id_user, char* celular) {
 
     printf(ERRO_REGISTRO_NAO_ENCONTRADO);
 }
-//todo
+
 void remover_usuario_menu(char *id_user) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     usuarios_index *resultadoBusca = (usuarios_index*) busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, false);
     if(resultadoBusca) {
-//        int bytesOfSet = resultadoBusca->rrn * TAM_REGISTRO_USUARIO;
         Usuario u =  recuperar_registro_usuario(resultadoBusca->rrn);
-//        char* excluido = "*|";
         u.id_user[0] = '*';
-        u.id_user[0] = '|';
+        u.id_user[1] = '|';
         escrever_registro_usuario(u, resultadoBusca->rrn);
-
-
-        resultadoBusca->rrn = -1;
+        novo_usuarios_idx(resultadoBusca->rrn);
         return;
     }
     printf(ERRO_REGISTRO_NAO_ENCONTRADO);
@@ -1075,11 +1071,38 @@ void listar_compras_periodo_menu(char *data_inicio, char *data_fim) {
     printf(ERRO_NAO_IMPLEMENTADO, "listar_compras_periodo_menu");
 }
 
-
+//todo
 /* Liberar espaço */
 void liberar_espaco_menu() {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "liberar_espaco_menu");
+    //percorrer os registro de usuarios da última posição para a primeira
+
+//    for (int i = qtd_registros_usuarios; i >=0; --i) {
+//        Usuario uRmv = recuperar_registro_usuario(i);
+//        if(uRmv.id_user[0] == '*') {
+//            //caso o resgistro seja o último, deletamos-o
+//            if(i == qtd_registros_usuarios){
+//                uRmv.id_user[0] = '/0';
+//                qtd_registros_usuarios--;
+//            }
+//            //usuario deletado não é o ultimo do resgistro de usuarios
+//            else {
+//                //copiamos o ultimo para esse posição
+//                Usuario uLast = recuperar_registro_usuario(qtd_registros_usuarios);
+//                strcpy(uRmv.id_user, uLast.id_user);
+//                strcpy(uRmv.username, uLast.username);
+//                strcpy(uRmv.email, uLast.email);
+//                strcpy(uRmv.celular, uLast.celular);
+//                uRmv.saldo = uLast.saldo;
+//                //encerramos a string
+//                uLast.id_user[0] = '/0';
+//                qtd_registros_usuarios--;
+//            }
+//
+//        }
+//    }
+//    criar_usuarios_idx();
+    printf("a implementar");
 }
 
 
@@ -1171,10 +1194,10 @@ void imprimir_categorias_primario_idx_menu() {
 /* Liberar memória e encerrar programa */
 //todo liberar memoria dos outros index
 void liberar_memoria_menu() {
-//    free(usuarios_idx);
-//    free(jogos_idx);
-    //free(compras_idx);
-//    free(titulo_idx);
+    free(usuarios_idx);
+    free(jogos_idx);
+//    free(compras_idx);
+    free(titulo_idx);
     //free(data_user_game_idx);
     //inverted list
     exit(0);
@@ -1291,12 +1314,15 @@ void* busca_binaria_teto(const void* key, void* base, size_t num, size_t size, i
     printf(ERRO_NAO_IMPLEMENTADO, "busca_binaria_teto");
 }
 
-void novo_usuarios_idx() {
+void novo_usuarios_idx(int rrn) {
 
-    Usuario u = recuperar_registro_usuario(qtd_registros_usuarios-1);
-    strcpy(usuarios_idx[qtd_registros_usuarios-1].id_user, u.id_user);
-    usuarios_idx[qtd_registros_usuarios-1].rrn = qtd_registros_usuarios-1;
-
+    Usuario u = recuperar_registro_usuario(rrn);
+    if (strncmp(u.id_user, "*|", 2) == 0)
+        usuarios_idx[rrn].rrn = -1; // registro excluído
+    else{
+        strcpy(usuarios_idx[qtd_registros_usuarios-1].id_user, u.id_user);
+        usuarios_idx[rrn].rrn = rrn;
+    }
     qsort(usuarios_idx, qtd_registros_usuarios, sizeof(usuarios_index), qsort_usuarios_idx);
 }
 
