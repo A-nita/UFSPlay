@@ -526,6 +526,9 @@ void novo_jogos_idx();
 
 void novo_titulo_idx();
 
+void copiaUsuario(Usuario a, Usuario b);
+
+
 
 /* ==========================================================================
  * ============================ FUNÇÃO PRINCIPAL ============================
@@ -957,7 +960,9 @@ void remover_usuario_menu(char *id_user) {
         u.id_user[0] = '*';
         u.id_user[1] = '|';
         escrever_registro_usuario(u, resultadoBusca->rrn);
-        novo_usuarios_idx(resultadoBusca->rrn);
+//        novo_usuarios_idx(resultadoBusca->rrn);
+        criar_usuarios_idx();
+        printf(SUCESSO);
         return;
     }
     printf(ERRO_REGISTRO_NAO_ENCONTRADO);
@@ -1071,38 +1076,41 @@ void listar_compras_periodo_menu(char *data_inicio, char *data_fim) {
     printf(ERRO_NAO_IMPLEMENTADO, "listar_compras_periodo_menu");
 }
 
-//todo
+
 /* Liberar espaço */
 void liberar_espaco_menu() {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     //percorrer os registro de usuarios da última posição para a primeira
 
-//    for (int i = qtd_registros_usuarios; i >=0; --i) {
-//        Usuario uRmv = recuperar_registro_usuario(i);
-//        if(uRmv.id_user[0] == '*') {
-//            //caso o resgistro seja o último, deletamos-o
-//            if(i == qtd_registros_usuarios){
-//                uRmv.id_user[0] = '/0';
-//                qtd_registros_usuarios--;
-//            }
-//            //usuario deletado não é o ultimo do resgistro de usuarios
-//            else {
-//                //copiamos o ultimo para esse posição
-//                Usuario uLast = recuperar_registro_usuario(qtd_registros_usuarios);
-//                strcpy(uRmv.id_user, uLast.id_user);
-//                strcpy(uRmv.username, uLast.username);
-//                strcpy(uRmv.email, uLast.email);
-//                strcpy(uRmv.celular, uLast.celular);
-//                uRmv.saldo = uLast.saldo;
-//                //encerramos a string
-//                uLast.id_user[0] = '/0';
-//                qtd_registros_usuarios--;
-//            }
-//
-//        }
-//    }
-//    criar_usuarios_idx();
-    printf("a implementar");
+    for (int i = qtd_registros_usuarios-1; i >=0; --i) {
+        Usuario uRmv = recuperar_registro_usuario(i);
+        if (strncmp(uRmv.id_user, "*|", 2) == 0) {
+            usuarios_idx[i].rrn = -1; // registro excluído
+            if(i == qtd_registros_usuarios){ //usuario deletado é o ultimo do resgistro de usuarios
+                uRmv.id_user[0] = '/0';
+                qtd_registros_usuarios--;
+            }
+
+            //usuario deletado não é o ultimo do resgistro de usuarios
+            else {
+                //copiamos o ultimo para esse posição
+                Usuario ultimo = recuperar_registro_usuario(qtd_registros_usuarios-1);
+                for (int j = qtd_registros_usuarios-1; j > i ; --j) {
+                    Usuario b = ultimo;
+                    Usuario a = recuperar_registro_usuario(j-1);
+                    copiaUsuario(ultimo, a);
+                    copiaUsuario(a,b);
+
+                    escrever_registro_usuario(b, j-1);
+                }
+                //encerramos a string
+                qtd_registros_usuarios--;
+                ARQUIVO_USUARIOS[qtd_registros_usuarios*TAM_REGISTRO_USUARIO] = '\0';
+            }
+        }
+    }
+    criar_usuarios_idx();
+    printf(SUCESSO);
 }
 
 
@@ -1320,7 +1328,7 @@ void novo_usuarios_idx(int rrn) {
     if (strncmp(u.id_user, "*|", 2) == 0)
         usuarios_idx[rrn].rrn = -1; // registro excluído
     else{
-        strcpy(usuarios_idx[qtd_registros_usuarios-1].id_user, u.id_user);
+        strcpy(usuarios_idx[rrn].id_user, u.id_user);
         usuarios_idx[rrn].rrn = rrn;
     }
     qsort(usuarios_idx, qtd_registros_usuarios, sizeof(usuarios_index), qsort_usuarios_idx);
@@ -1351,3 +1359,12 @@ void novo_titulo_idx() {
     qsort(titulo_idx, qtd_registros_jogos, sizeof(titulos_index), qsort_titulo_idx);
 
 }
+
+void copiaUsuario(Usuario a, Usuario b){
+    strcpy(a.id_user, b.id_user);
+    strcpy(a.username, b.username);
+    strcpy(a.email, b.email);
+    strcpy(a.celular, b.celular);
+    a.saldo = b.saldo;
+}
+
