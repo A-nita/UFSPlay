@@ -271,7 +271,7 @@ struct tm gmtime_(const int64_t lcltime) {
 
     return res;
 }
-//todo
+
 /**
  * Escreve a <i>data</i> atual no formato <code>AAAAMMDD</code> em uma <i>string</i>
  * fornecida como parâmetro.<br />
@@ -530,6 +530,8 @@ void novo_titulo_idx();
 
 void copiaUsuario(Usuario a, Usuario b);
 
+int bsearch_compras_idx(const void *a, const void *b);
+
 
 
 /* ==========================================================================
@@ -579,7 +581,7 @@ int main() {
 
     criar_usuarios_idx();
    criar_jogos_idx();
-//    criar_compras_idx();
+    criar_compras_idx();
     criar_titulo_idx();
 //    criar_data_user_game_idx();
 //    criar_categorias_idx();
@@ -740,9 +742,7 @@ void criar_compras_idx() {
 
         strcpy(compras_idx[i].id_user, c.id_user_dono);
         strcpy(compras_idx[i].id_game, c.id_game);
-
     }
-    //todo qsort
     qsort(compras_idx, qtd_registros_compras, sizeof(compras_index), qsort_compras_idx);
 }
 
@@ -885,10 +885,14 @@ Compra recuperar_registro_compra(int rrn) {
     strncpy(temp, ARQUIVO_COMPRAS + (rrn * TAM_REGISTRO_COMPRA), TAM_REGISTRO_COMPRA);
     temp[TAM_REGISTRO_COMPRA] = '\0';
 
-    strncpy(c.id_user_dono, temp,11);
-    strncpy(c.id_game, temp+11,8);
-    strncpy(c.data_compra, temp+11+8,8);
-     return c;
+    strncpy(c.id_user_dono, temp,12);
+    c.id_user_dono[11] = '\0';
+    strncpy(c.data_compra, temp+12,8);
+    c.data_compra[8] = '\0';
+    strncpy(c.id_game, temp+12+7,8);
+    c.id_game[8] = '\0';
+
+    return c;
 }
 
 void escrever_registro_usuario(Usuario u, int rrn) {
@@ -948,14 +952,15 @@ void escrever_registro_jogo(Jogo j, int rrn) {
  * os dados na struct Compra */
 void escrever_registro_compra(Compra c, int rrn) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-//    char temp[TAM_REGISTRO_COMPRA + 1];
-//    temp[0] = '\0';
-//    strcpy(temp, c.id_user_dono);
-//    strcat(temp, c.id_game);
-//    strcat(temp, c.data_compra);
-//
-//    strncpy(ARQUIVO_COMPRAS + rrn*TAM_REGISTRO_COMPRA, temp, TAM_REGISTRO_COMPRA);
-//    ARQUIVO_COMPRAS[qtd_registros_compras*TAM_REGISTRO_COMPRA] = '\0';
+
+    char temp[TAM_REGISTRO_COMPRA + 1];
+    temp[0] = '\0';
+    strcpy(temp, c.id_user_dono);
+    strcat(temp, c.data_compra);
+    strcat(temp, c.id_game);
+
+    strncpy(ARQUIVO_COMPRAS + rrn*TAM_REGISTRO_COMPRA, temp, TAM_REGISTRO_COMPRA);
+    ARQUIVO_COMPRAS[qtd_registros_compras*TAM_REGISTRO_COMPRA] = '\0';
 }
 
 
@@ -1051,6 +1056,9 @@ void adicionar_saldo_menu(char *id_user, double valor) {
 //todo
 void comprar_menu(char *id_user, char *titulo) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
+    //compra já realizada
+
+
     //usuario nao existe
     usuarios_index *uIdx = (usuarios_index*) busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, false);
     titulos_index *jID = (titulos_index*) busca_binaria(titulo, titulo_idx, qtd_registros_jogos, sizeof(*titulo_idx), qsort_titulo_idx, false);
@@ -1062,26 +1070,43 @@ void comprar_menu(char *id_user, char *titulo) {
     }
     jogos_index *jIdx = (jogos_index*) busca_binaria(jID->id_game, jogos_idx, qtd_registros_jogos, sizeof(*jogos_idx), qsort_jogos_idx, false);
 
+    compras_index a;
+    strcpy(a.id_user, id_user);
+    strcpy(a.id_game, jID->id_game);
+
+
+
+    if(busca_binaria(&a, compras_idx, qtd_registros_compras, sizeof(*compras_idx), qsort_compras_idx, false)){
+
+        char chave_compra[12+9];
+        strcpy(chave_compra, a.id_user);
+        strcat(chave_compra, jID->id_game);
+        printf(ERRO_PK_REPETIDA, chave_compra);
+        return;
+    }
     //todo busca binaria no index de compras
     Usuario u = recuperar_registro_usuario(uIdx->rrn);
     Jogo j = recuperar_registro_jogo(jIdx->rrn);
     //verifica se o usuario de saldo o suficeinte para comprar o jogo
+
     if(u.saldo < j.preco) {
         printf(ERRO_SALDO_NAO_SUFICIENTE);
         return;
     }
-//
-//
-//
+    //subtraimos o valor do jogo do saldo do usuario
+    u.saldo -= j.preco;
+    escrever_registro_usuario(u, uIdx->rrn);
+
     Compra c;
     strcpy(c.id_user_dono, u.id_user);
     strcpy(c.id_game, j.id_game);
-    //data
-    strcpy(c.data_compra, "23022022");
-//    //Salvar compra no resgistro
-//    escrever_registro_compra(c, qtd_registros_compras++);
-//    //Adcionar no indice de compras
+    char data[TAM_DATE];
+    current_date(data);
+    strcpy(c.data_compra, data);
 
+    escrever_registro_compra(c, qtd_registros_compras++);
+    criar_compras_idx();
+    printf(SUCESSO);
 }
 
 void cadastrar_categoria_menu(char* titulo, char* categoria) {
@@ -1229,8 +1254,10 @@ void imprimir_compras_idx_menu() {
     if (qtd_registros_compras == 0)
         printf(ERRO_ARQUIVO_VAZIO);
 
-    for (unsigned i = 0; i < qtd_registros_compras; ++i)
+    for (unsigned i = 0; i < qtd_registros_compras; ++i){
         printf("%s, %s, %d\n", compras_idx[i].id_user, compras_idx[i].id_game, compras_idx[i].rrn);
+    }
+
 }
 
 
@@ -1275,7 +1302,7 @@ void imprimir_categorias_primario_idx_menu() {
 void liberar_memoria_menu() {
     free(usuarios_idx);
     free(jogos_idx);
-//    free(compras_idx);
+    free(compras_idx);
     free(titulo_idx);
     //free(data_user_game_idx);
     //inverted list
@@ -1298,12 +1325,14 @@ int qsort_jogos_idx(const void *a, const void *b) {
 int qsort_compras_idx(const void *a, const void *b) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     if(strcmp( ( (compras_index *)a )->id_user, ( (compras_index *)b )->id_user) == 0) {
-        strcmp( ( (compras_index *)a )->id_game, ( (compras_index *)b )->id_game);
+        return strcmp( ( (compras_index *)a )->id_game, ( (compras_index *)b )->id_game);
     }
     else {
         return strcmp( ( (compras_index *)a )->id_user, ( (compras_index *)b )->id_user);
     }
 }
+
+
 
 /* Função de comparação entre chaves do índice titulo_idx */
 int qsort_titulo_idx(const void *a, const void *b) {
@@ -1358,7 +1387,7 @@ void* busca_binaria(const void *key, const void *base0, size_t nmemb, size_t siz
     int lim, cmp;
     const void *p;
     if(exibir_caminho) {
-        printf("Registros percorridos:");
+        printf(REGS_PERCORRIDOS);
     }
 
     for (lim = (int)nmemb; lim != 0 ; lim = lim/2) { //move o cabeçote para a direta, dividindo por 2 >>= 1
@@ -1444,3 +1473,11 @@ void copiaUsuario(Usuario a, Usuario b){
     a.saldo = b.saldo;
 }
 
+int bsearch_compras_idx(const void *a, const void *b) {
+    /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
+    if(strcmp( ( (compras_index *)a )->id_user, ( (compras_index *)b )->id_user) == 0 &&
+       strcmp( ( (compras_index *)a )->id_game, ( (compras_index *)b )->id_game) == 0){
+        return 0;
+    }
+    return 1;
+}
