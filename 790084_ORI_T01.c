@@ -1184,13 +1184,43 @@ void listar_jogos_categorias_menu(char *categoria) {
 //todo
 void listar_compras_periodo_menu(char *data_inicio, char *data_fim) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-//    if(!qtd_registros_compras) {
-//        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
-//    }
-//    data_user_game_index *dataInicio = busca_binaria()
-//    for (int i = 0; i < qtd_registros_compras; ++i) {
-//        exibir_usuario(usuarios_idx[i].rrn);
-//    }
+    if(!qtd_registros_compras) {
+        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+    }
+    data_user_game_index *dataInicio = busca_binaria_teto(data_inicio, data_user_game_idx, qtd_registros_compras, sizeof(data_user_game_index), qsort_data_idx);
+    data_user_game_index *dataFim = busca_binaria_piso(data_fim, data_user_game_idx, qtd_registros_compras, sizeof(data_user_game_index), qsort_data_idx);
+//    printf("-------------------------------\n");
+//    printf("Data Inicio: %s\n", dataInicio->data);
+//    printf("Data Fim: %s\n", dataFim->data);
+//    printf("-------------------------------\n");
+
+    if(!dataInicio || !dataFim){
+        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+        return;
+    }
+
+
+
+    while(true) {
+
+        compras_index dataInicial;
+        strcpy(dataInicial.id_user, dataInicio->id_user);
+        strcpy(dataInicial.id_game, dataInicio->id_game);
+
+
+        compras_index *compra =  (compras_index*) busca_binaria(&dataInicial, compras_idx, qtd_registros_compras,
+                                                                 sizeof(compras_index), qsort_compras_idx, true);
+        if(!compra){
+            printf("WIU WIU WIU WIU\n");
+            return;
+        }
+        exibir_compra(compra->rrn);
+
+        dataInicio = &dataInicio[1]; //sizeof(data_user_game_index);
+        if(dataInicio == &dataFim[1]){
+            break;
+        }
+    }
 }
 
 
@@ -1440,12 +1470,68 @@ void* busca_binaria(const void *key, const void *base0, size_t nmemb, size_t siz
 
 void* busca_binaria_piso(const void* key, void* base, size_t num, size_t size, int (*compar)(const void*,const void*)) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "busca_binaria_piso");
+    int lim, cmp;
+    void *p;
+
+    for (lim = (int)num; lim != 0 ; lim = lim/2) { //move o cabeçote para a direta, dividindo por 2 >>= 1
+        p = base + (lim / 2) * size; //meio do vetor
+
+        cmp = (*compar)(key, p);
+
+        if(cmp == 0) {
+            return (void *) p;
+        }
+        if(cmp > 0) {//move para a direita
+            base = p + size;
+            lim--;
+        }
+        //move pra esquerda
+    }
+    if(p == base){
+        return NULL;
+    }
+    else {
+        return p;
+    }
 }
 
 void* busca_binaria_teto(const void* key, void* base, size_t num, size_t size, int (*compar)(const void*,const void*)) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "busca_binaria_teto");
+    int lim, cmp;
+    void *p;
+
+    for (lim = (int)num; lim != 0 ; lim = lim/2) { //move o cabeçote para a direta, dividindo por 2 >>= 1
+        p = base + (lim / 2) * size; //meio do vetor
+
+        cmp = (*compar)(key, p);
+
+        if(cmp == 0) {
+            return (void *) p;
+        }
+        if(cmp > 0) {//move para a direita
+            base = p + size;
+            lim--;
+        }
+        //move pra esquerda
+    }
+
+    //todo
+    //se for menor
+    if(cmp > 0){
+        if(p == base + (size*num) - size) {
+            return NULL;
+        }
+        else {
+            cmp = (*compar)(key, p + size);
+            if(cmp > 0) {
+                return  NULL;
+            }
+            return p+size;
+        }
+    }
+    //se for maior
+    return p;
+
 }
 
 void novo_usuarios_idx(int rrn) {
