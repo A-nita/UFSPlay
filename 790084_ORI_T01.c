@@ -583,7 +583,7 @@ int main() {
    criar_jogos_idx();
     criar_compras_idx();
     criar_titulo_idx();
-//    criar_data_user_game_idx();
+    criar_data_user_game_idx();
 //    criar_categorias_idx();
 
     while (1) {
