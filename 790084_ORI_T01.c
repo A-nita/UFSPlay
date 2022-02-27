@@ -90,7 +90,7 @@ typedef struct {
     double preco;
     char categorias[QTD_MAX_CATEGORIAS][TAM_MAX_CATEGORIA];
 } Jogo;
-//todo
+
 /* Registro de Compra */
 typedef struct {
     char id_user_dono[TAM_ID_USER];
@@ -338,13 +338,13 @@ bool exibir_compra(int rrn);
  * e retorna os dados nas structs Usuario, Jogo e Compra */
 Usuario recuperar_registro_usuario(int rrn);
 Jogo recuperar_registro_jogo(int rrn);
-//todo
+
 Compra recuperar_registro_compra(int rrn);
 
 /* Escreve em seu respectivo arquivo na posição informada (RRN) */
 void escrever_registro_usuario(Usuario u, int rrn);
 void escrever_registro_jogo(Jogo j, int rrn);
-//todo
+
 void escrever_registro_compra(Compra c, int rrn);
 
 /* Funções principais */
@@ -765,11 +765,25 @@ void criar_titulo_idx() {
     }
     qsort(titulo_idx, qtd_registros_jogos, sizeof(titulos_index), qsort_titulo_idx);
 }
-
+//todo
 /* Cria o índice secundário data_user_game_idx */
 void criar_data_user_game_idx() {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "criar_data_user_game_idx");
+    if(!data_user_game_idx) {
+        data_user_game_idx = malloc(MAX_REGISTROS * sizeof(data_user_game_index));
+    }
+    if(!data_user_game_idx) {
+        printf(ERRO_MEMORIA_INSUFICIENTE);
+        exit(1);
+    }
+    for (unsigned i = 0; i < qtd_registros_compras; ++i) {
+        Compra c = recuperar_registro_compra(i);
+
+        strcpy(data_user_game_idx[i].id_user, c.id_user_dono);
+        strcpy(data_user_game_idx[i].id_game, c.id_game);
+        strcpy(data_user_game_idx[i].data, c.data_compra);
+    }
+    qsort(data_user_game_idx, qtd_registros_compras, sizeof(data_user_game_index), qsort_data_idx);
 }
 
 /* Cria os índices (secundário e primário) de categorias_idx */
@@ -887,7 +901,7 @@ Compra recuperar_registro_compra(int rrn) {
 
     strncpy(c.id_user_dono, temp,12);
     c.id_user_dono[11] = '\0';
-    strncpy(c.data_compra, temp+12,8);
+    strncpy(c.data_compra, temp+11,8);
     c.data_compra[8] = '\0';
     strncpy(c.id_game, temp+12+7,8);
     c.id_game[8] = '\0';
@@ -947,7 +961,7 @@ void escrever_registro_jogo(Jogo j, int rrn) {
 }
 
 
-//todo
+
 /* Escreve no arquivo de compras na posição informada (RRN)
  * os dados na struct Compra */
 void escrever_registro_compra(Compra c, int rrn) {
@@ -1053,7 +1067,7 @@ void adicionar_saldo_menu(char *id_user, double valor) {
 
     printf(ERRO_REGISTRO_NAO_ENCONTRADO);
 }
-//todo
+
 void comprar_menu(char *id_user, char *titulo) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     //compra já realizada
@@ -1106,6 +1120,7 @@ void comprar_menu(char *id_user, char *titulo) {
 
     escrever_registro_compra(c, qtd_registros_compras++);
     criar_compras_idx();
+    criar_data_user_game_idx();
     printf(SUCESSO);
 }
 
@@ -1166,10 +1181,16 @@ void listar_jogos_categorias_menu(char *categoria) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     printf(ERRO_NAO_IMPLEMENTADO, "listar_jogo_categorias_menu");
 }
-
+//todo
 void listar_compras_periodo_menu(char *data_inicio, char *data_fim) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "listar_compras_periodo_menu");
+//    if(!qtd_registros_compras) {
+//        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+//    }
+//    data_user_game_index *dataInicio = busca_binaria()
+//    for (int i = 0; i < qtd_registros_compras; ++i) {
+//        exibir_usuario(usuarios_idx[i].rrn);
+//    }
 }
 
 
@@ -1269,7 +1290,7 @@ void imprimir_titulo_idx_menu() {
     for (unsigned i = 0; i < qtd_registros_jogos; ++i)
         printf("%s, %s\n", titulo_idx[i].titulo, titulo_idx[i].id_game);
 }
-
+//todo
 void imprimir_data_user_game_idx_menu() {
     if (qtd_registros_compras == 0) {
         printf(ERRO_ARQUIVO_VAZIO);
@@ -1304,7 +1325,7 @@ void liberar_memoria_menu() {
     free(jogos_idx);
     free(compras_idx);
     free(titulo_idx);
-    //free(data_user_game_idx);
+    free(data_user_game_idx);
     //inverted list
     exit(0);
 }
@@ -1339,11 +1360,11 @@ int qsort_titulo_idx(const void *a, const void *b) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     return strcmp( ( (titulos_index *)a )->titulo, ( (titulos_index *)b )->titulo);
 }
-
+//todo
 /* Funções de comparação entre chaves do índice data_user_game_idx */
 int qsort_data_idx(const void *a, const void *b) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "qsort_data_idx");
+    return strcmp( ( (data_user_game_index *)a )->data, ( (data_user_game_index *)b )->data);
 }
 
 int qsort_data_user_game_idx(const void *a, const void *b) {
