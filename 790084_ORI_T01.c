@@ -338,13 +338,11 @@ bool exibir_compra(int rrn);
  * e retorna os dados nas structs Usuario, Jogo e Compra */
 Usuario recuperar_registro_usuario(int rrn);
 Jogo recuperar_registro_jogo(int rrn);
-
 Compra recuperar_registro_compra(int rrn);
 
 /* Escreve em seu respectivo arquivo na posição informada (RRN) */
 void escrever_registro_usuario(Usuario u, int rrn);
 void escrever_registro_jogo(Jogo j, int rrn);
-
 void escrever_registro_compra(Compra c, int rrn);
 
 /* Funções principais */
@@ -522,19 +520,14 @@ void* busca_binaria_teto(const void* key, void* base, size_t num, size_t size, i
 
 /* <<< COLOQUE AQUI OS DEMAIS PROTÓTIPOS DE FUNÇÕES, SE NECESSÁRIO >>> */
 //atualiza o index ao inserir um novo usuario
+
+/* cria um novo usuário/jogo/compra em seus respectivos índices*/
 void novo_usuarios_idx();
-
-
 void novo_jogos_idx();
-
 void novo_titulo_idx();
 
+/* realiza a copia dos dados do Usuario b para o Usuario a*/
 void copiaUsuario(Usuario a, Usuario b);
-
-int bsearch_compras_idx(const void *a, const void *b);
-
-void atualizar_usuario_idx();
-
 
 
 /* ==========================================================================
@@ -768,7 +761,7 @@ void criar_titulo_idx() {
     }
     qsort(titulo_idx, qtd_registros_jogos, sizeof(titulos_index), qsort_titulo_idx);
 }
-//todo
+
 /* Cria o índice secundário data_user_game_idx */
 void criar_data_user_game_idx() {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
@@ -856,7 +849,6 @@ Usuario recuperar_registro_usuario(int rrn) {
 
 /* Recupera do arquivo de jogos o registro com o RRN
  * informado e retorna os dados na struct Jogo */
-
 Jogo recuperar_registro_jogo(int rrn) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     Jogo j;
@@ -893,7 +885,7 @@ Jogo recuperar_registro_jogo(int rrn) {
 
 }
 
-/* todo Recupera do arquivo de compras o registro com o RRN
+/*  Recupera do arquivo de compras o registro com o RRN
  * informado e retorna os dados na struct Compra */
 Compra recuperar_registro_compra(int rrn) {     
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
@@ -937,7 +929,6 @@ void escrever_registro_usuario(Usuario u, int rrn) {
 
 /* Escreve no arquivo de jogos na posição informada (RRN)
  * os dados na struct Jogo */
-
 void escrever_registro_jogo(Jogo j, int rrn) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
 
@@ -963,8 +954,6 @@ void escrever_registro_jogo(Jogo j, int rrn) {
     ARQUIVO_JOGOS[qtd_registros_jogos*TAM_REGISTRO_JOGO] = '\0';
 }
 
-
-
 /* Escreve no arquivo de compras na posição informada (RRN)
  * os dados na struct Compra */
 void escrever_registro_compra(Compra c, int rrn) {
@@ -984,11 +973,13 @@ void escrever_registro_compra(Compra c, int rrn) {
 /* Funções principais */
 void cadastrar_usuario_menu(char *id_user, char *username, char *email) {
 /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
+    //Busca-se o id_user. para verificar se este usuário já está cadastraso
     if(busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, false)) {
         printf(ERRO_PK_REPETIDA, id_user);
         return;
     }
 
+    //criamos o usuário
     Usuario u;
     strcpy(u.id_user, id_user);
     strcpy(u.username, username);
@@ -996,6 +987,7 @@ void cadastrar_usuario_menu(char *id_user, char *username, char *email) {
     strcpy(u.celular, "***********");
     u.saldo = 0;
 
+    //adcionamos o usuário no registro, e adcionamo-os no índice
     escrever_registro_usuario(u, qtd_registros_usuarios++);
     novo_usuarios_idx();
 
@@ -1004,8 +996,10 @@ void cadastrar_usuario_menu(char *id_user, char *username, char *email) {
 
 void cadastrar_celular_menu(char* id_user, char* celular) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
+    //verificamos se o usuário existe
     usuarios_index *resultadoBusca = (usuarios_index*) busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, false);
     if(resultadoBusca) {
+        //recuperamos o registro de usuário, alteramos seu celular, e salvamos
         Usuario u = recuperar_registro_usuario(resultadoBusca->rrn);
         strcpy(u.celular, celular);
         escrever_registro_usuario(u, resultadoBusca->rrn);
@@ -1018,11 +1012,14 @@ void cadastrar_celular_menu(char* id_user, char* celular) {
 
 void remover_usuario_menu(char *id_user) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
+    //verificamos se o usário que desejamos excluir exite, ou já nfoi excluido
     usuarios_index *resultadoBusca = (usuarios_index*) busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, false);
     if(resultadoBusca && resultadoBusca->rrn != -1) {
+        //recuperamos o registro do usuáio e o marcamo como excluído
         Usuario u =  recuperar_registro_usuario(resultadoBusca->rrn);
         u.id_user[0] = '*';
         u.id_user[1] = '|';
+        //salvamos o usuário excluído no arquivo, e alteramos seu rrn no índice para -1
         escrever_registro_usuario(u, resultadoBusca->rrn);
         resultadoBusca->rrn = -1;
         printf(SUCESSO);
@@ -1052,15 +1049,17 @@ void cadastrar_jogo_menu(char *titulo, char *desenvolvedor, char *editora, char*
     printf(SUCESSO);
 }
 
-
 void adicionar_saldo_menu(char *id_user, double valor) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
+    //Verificamos se o valor é negativo
     if(valor <= 0) {
         printf(ERRO_VALOR_INVALIDO);
         return;
     }
+    //verificamos se o usuário existe
     usuarios_index *resultadoBusca = (usuarios_index*) busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, false);
     if(resultadoBusca) {
+        //recuperamos o registro de usuário, alteramos seu saldo, e salvamos
         Usuario u = recuperar_registro_usuario(resultadoBusca->rrn);
         u.saldo += valor;
         escrever_registro_usuario(u, resultadoBusca->rrn);
@@ -1073,10 +1072,7 @@ void adicionar_saldo_menu(char *id_user, double valor) {
 
 void comprar_menu(char *id_user, char *titulo) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    //compra já realizada
-
-
-    //usuario nao existe
+    //verificamos se o usuário e o jogo existem
     usuarios_index *uIdx = (usuarios_index*) busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, false);
     titulos_index *jID = (titulos_index*) busca_binaria(titulo, titulo_idx, qtd_registros_jogos, sizeof(*titulo_idx), qsort_titulo_idx, false);
 
@@ -1085,35 +1081,36 @@ void comprar_menu(char *id_user, char *titulo) {
         printf(ERRO_REGISTRO_NAO_ENCONTRADO);
         return;
     }
+    //indice primário de jogo
     jogos_index *jIdx = (jogos_index*) busca_binaria(jID->id_game, jogos_idx, qtd_registros_jogos, sizeof(*jogos_idx), qsort_jogos_idx, false);
 
+    //criamos um compra_index, pra usálo como chave da busca binária
     compras_index a;
     strcpy(a.id_user, id_user);
     strcpy(a.id_game, jID->id_game);
 
 
-
+    //Verificamos se a compra já existe
     if(busca_binaria(&a, compras_idx, qtd_registros_compras, sizeof(*compras_idx), qsort_compras_idx, false)){
-
         char chave_compra[12+9];
         strcpy(chave_compra, a.id_user);
         strcat(chave_compra, jID->id_game);
         printf(ERRO_PK_REPETIDA, chave_compra);
         return;
     }
-    //todo busca binaria no index de compras
+    //verifica se o usuario de saldo o suficeinte para comprar o jogo
     Usuario u = recuperar_registro_usuario(uIdx->rrn);
     Jogo j = recuperar_registro_jogo(jIdx->rrn);
-    //verifica se o usuario de saldo o suficeinte para comprar o jogo
-
     if(u.saldo < j.preco) {
         printf(ERRO_SALDO_NAO_SUFICIENTE);
         return;
     }
     //subtraimos o valor do jogo do saldo do usuario
     u.saldo -= j.preco;
+    //salvamos o novo saldo do usuario
     escrever_registro_usuario(u, uIdx->rrn);
 
+    //criamos a compra e a salvamos
     Compra c;
     strcpy(c.id_user_dono, u.id_user);
     strcpy(c.id_game, j.id_game);
@@ -1121,12 +1118,14 @@ void comprar_menu(char *id_user, char *titulo) {
     current_date(data);
     strcpy(c.data_compra, data);
 
+    //salvamos a compra no arquivo e atualizamos os indices de compras
     escrever_registro_compra(c, qtd_registros_compras++);
     criar_compras_idx();
     criar_data_user_game_idx();
     printf(SUCESSO);
 }
 
+//todo
 void cadastrar_categoria_menu(char* titulo, char* categoria) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     printf(ERRO_NAO_IMPLEMENTADO, "cadastrar_categoria_menu");
@@ -1146,6 +1145,7 @@ void buscar_usuario_id_user_menu(char *id_user) {
 
 void buscar_jogo_id_menu(char *id_game) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
+    //Verificamos se o jogo exisre e se sim, exibimos seus dados
     jogos_index *resultadoBusca = (jogos_index*) busca_binaria(id_game, jogos_idx, qtd_registros_jogos, sizeof(*jogos_idx), qsort_jogos_idx, true);
     if (resultadoBusca) {
         exibir_jogo(resultadoBusca->rrn);
@@ -1156,8 +1156,7 @@ void buscar_jogo_id_menu(char *id_game) {
 
 void buscar_jogo_titulo_menu(char *titulo) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    Jogo j;
-
+    //Verificamos se o jogo existe e se sim, exibimos seus dados
     titulos_index *resultadoBusca = (titulos_index*) busca_binaria(titulo, titulo_idx, qtd_registros_jogos, sizeof(*titulo_idx), qsort_titulo_idx, true);
     if (resultadoBusca) {
         buscar_jogo_id_menu(resultadoBusca->id_game);
@@ -1171,13 +1170,12 @@ void buscar_jogo_titulo_menu(char *titulo) {
 
 void listar_usuarios_id_user_menu() {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    if(!qtd_registros_usuarios) {
+    //se houver registros de usuário, exibimos-os
+    if(!qtd_registros_usuarios)
         printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
-    }
 
-    for (int i = 0; i < qtd_registros_usuarios; ++i) {
+    for (int i = 0; i < qtd_registros_usuarios; ++i)
         exibir_usuario(usuarios_idx[i].rrn);
-    }
 }
 
 void listar_jogos_categorias_menu(char *categoria) {
@@ -1187,38 +1185,30 @@ void listar_jogos_categorias_menu(char *categoria) {
 
 void listar_compras_periodo_menu(char *data_inicio, char *data_fim) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
+    //Verificamos se há compras realizadas
     if(!qtd_registros_compras) {
         printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
     }
+    //buscamos o index da primeria e a ultima data do período
     data_user_game_index *dataInicio = busca_binaria_teto(data_inicio, data_user_game_idx, qtd_registros_compras, sizeof(data_user_game_index), qsort_data_idx);
     data_user_game_index *dataFim = busca_binaria_piso(data_fim, data_user_game_idx, qtd_registros_compras, sizeof(data_user_game_index), qsort_data_idx);
-//    printf("-------------------------------\n");
-//    printf("Data Inicio: %s\n", dataInicio->data);
-//    printf("Data Fim: %s\n", dataFim->data);
-//    printf("-------------------------------\n");
-
+    //verificamos se há compras no período
     if(!dataInicio || !dataFim){
         printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
         return;
     }
 
-
-
     while(true) {
-
+        //obtemos o idUser e IdGame para poder buscar pela compra
         compras_index dataInicial;
         strcpy(dataInicial.id_user, dataInicio->id_user);
         strcpy(dataInicial.id_game, dataInicio->id_game);
 
-
         compras_index *compra =  (compras_index*) busca_binaria(&dataInicial, compras_idx, qtd_registros_compras,
                                                                  sizeof(compras_index), qsort_compras_idx, true);
-        if(!compra){
-            printf("WIU WIU WIU WIU\n");
-            return;
-        }
+        //exibimos a compra
         exibir_compra(compra->rrn);
-
+        //passamos para a proxima data dentro do perído verificando, se não passamos da data limite
         dataInicio = &dataInicio[1]; //sizeof(data_user_game_index);
         if(dataInicio == &dataFim[1]){
             break;
@@ -1230,20 +1220,22 @@ void listar_compras_periodo_menu(char *data_inicio, char *data_fim) {
 /* Liberar espaço */
 void liberar_espaco_menu() {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    //percorrer os registro de usuarios da última posição para a primeira
 
+    //percorrer os registro de usuarios da última posição para a primeira
     for (int i = qtd_registros_usuarios-1; i >=0; --i) {
+        //recuperamos o registro e verificamos se foi excluído
         Usuario uRmv = recuperar_registro_usuario(i);
         if (strncmp(uRmv.id_user, "*|", 2) == 0) {
             usuarios_idx[i].rrn = -1; // registro excluído
             if(i == qtd_registros_usuarios){ //usuario deletado é o ultimo do resgistro de usuarios
+                //apenas deletamos a ultima posição
                 uRmv.id_user[0] = '/0';
                 qtd_registros_usuarios--;
             }
 
             //usuario deletado não é o ultimo do resgistro de usuarios
             else {
-                //copiamos o ultimo para esse posição
+                //arrastamos os registros para essa posição
                 Usuario ultimo = recuperar_registro_usuario(qtd_registros_usuarios-1);
                 for (int j = qtd_registros_usuarios-1; j > i ; --j) {
                     Usuario b = ultimo;
@@ -1253,12 +1245,13 @@ void liberar_espaco_menu() {
 
                     escrever_registro_usuario(b, j-1);
                 }
-                //encerramos a string
+                //encerramos a string do arquivo
                 qtd_registros_usuarios--;
                 ARQUIVO_USUARIOS[qtd_registros_usuarios*TAM_REGISTRO_USUARIO] = '\0';
             }
         }
     }
+    //atualizamos o index de usuários
     criar_usuarios_idx();
     printf(SUCESSO);
 }
@@ -1386,8 +1379,6 @@ int qsort_compras_idx(const void *a, const void *b) {
     }
 }
 
-
-
 /* Função de comparação entre chaves do índice titulo_idx */
 int qsort_titulo_idx(const void *a, const void *b) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
@@ -1452,14 +1443,14 @@ void* busca_binaria(const void *key, const void *base0, size_t nmemb, size_t siz
         }
 
         cmp = (*compar)(key, p);
-
+        //valor procurado
         if(cmp == 0) {
             if(exibir_caminho) {
                 printf("\n");
             }
             return (void *) p;
         }
-        if(cmp > 0) {//move para a direita
+        if(cmp > 0) {//move para a direita - valor menor
             base = p + size;
             lim--;
         }
@@ -1538,6 +1529,7 @@ void* busca_binaria_teto(const void* key, void* base, size_t num, size_t size, i
 }
 
 void novo_usuarios_idx() {
+    //atualizamos a ultima posição do index com o novo usuário
     int rrn = qtd_registros_usuarios-1;
     Usuario u = recuperar_registro_usuario(rrn);
 
@@ -1547,8 +1539,8 @@ void novo_usuarios_idx() {
     qsort(usuarios_idx, qtd_registros_usuarios, sizeof(usuarios_index), qsort_usuarios_idx);
 }
 
-
 void novo_jogos_idx() {
+    //atualizamos a ultima posição do index com o novo jogo
 
     int rrn = qtd_registros_jogos-1;
     Jogo j = recuperar_registro_jogo(rrn);
@@ -1561,7 +1553,8 @@ void novo_jogos_idx() {
 }
 
 void novo_titulo_idx() {
-    /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
+    //atualizamos a ultima posição do index com o novo jogo
+
     int rrn = qtd_registros_jogos -1;
 
     Jogo j = recuperar_registro_jogo(rrn);
