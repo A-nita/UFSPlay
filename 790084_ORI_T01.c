@@ -522,7 +522,8 @@ void* busca_binaria_teto(const void* key, void* base, size_t num, size_t size, i
 
 /* <<< COLOQUE AQUI OS DEMAIS PROTÓTIPOS DE FUNÇÕES, SE NECESSÁRIO >>> */
 //atualiza o index ao inserir um novo usuario
-void novo_usuarios_idx(int rrn);
+void novo_usuarios_idx();
+
 
 void novo_jogos_idx();
 
@@ -531,6 +532,8 @@ void novo_titulo_idx();
 void copiaUsuario(Usuario a, Usuario b);
 
 int bsearch_compras_idx(const void *a, const void *b);
+
+void atualizar_usuario_idx();
 
 
 
@@ -994,7 +997,8 @@ void cadastrar_usuario_menu(char *id_user, char *username, char *email) {
     u.saldo = 0;
 
     escrever_registro_usuario(u, qtd_registros_usuarios++);
-    novo_usuarios_idx(qtd_registros_usuarios-1);
+    novo_usuarios_idx();
+
     printf(SUCESSO);
 }
 
@@ -1015,13 +1019,12 @@ void cadastrar_celular_menu(char* id_user, char* celular) {
 void remover_usuario_menu(char *id_user) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     usuarios_index *resultadoBusca = (usuarios_index*) busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, false);
-    if(resultadoBusca) {
+    if(resultadoBusca && resultadoBusca->rrn != -1) {
         Usuario u =  recuperar_registro_usuario(resultadoBusca->rrn);
         u.id_user[0] = '*';
         u.id_user[1] = '|';
         escrever_registro_usuario(u, resultadoBusca->rrn);
-//        novo_usuarios_idx(resultadoBusca->rrn);
-        criar_usuarios_idx();
+        resultadoBusca->rrn = -1;
         printf(SUCESSO);
         return;
     }
@@ -1181,7 +1184,7 @@ void listar_jogos_categorias_menu(char *categoria) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     printf(ERRO_NAO_IMPLEMENTADO, "listar_jogo_categorias_menu");
 }
-//todo
+
 void listar_compras_periodo_menu(char *data_inicio, char *data_fim) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     if(!qtd_registros_compras) {
@@ -1320,7 +1323,7 @@ void imprimir_titulo_idx_menu() {
     for (unsigned i = 0; i < qtd_registros_jogos; ++i)
         printf("%s, %s\n", titulo_idx[i].titulo, titulo_idx[i].id_game);
 }
-//todo
+
 void imprimir_data_user_game_idx_menu() {
     if (qtd_registros_compras == 0) {
         printf(ERRO_ARQUIVO_VAZIO);
@@ -1349,7 +1352,7 @@ void imprimir_categorias_primario_idx_menu() {
 
 
 /* Liberar memória e encerrar programa */
-//todo liberar memoria dos outros index
+
 void liberar_memoria_menu() {
     free(usuarios_idx);
     free(jogos_idx);
@@ -1371,7 +1374,7 @@ int qsort_jogos_idx(const void *a, const void *b) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     return strcmp( ( (jogos_index *)a )->id_game, ( (jogos_index *)b )->id_game);
 }
-//todo - tem que testar ainda
+
 /* Função de comparação entre chaves do índice compras_idx */
 int qsort_compras_idx(const void *a, const void *b) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
@@ -1390,7 +1393,7 @@ int qsort_titulo_idx(const void *a, const void *b) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     return strcmp( ( (titulos_index *)a )->titulo, ( (titulos_index *)b )->titulo);
 }
-//todo
+
 /* Funções de comparação entre chaves do índice data_user_game_idx */
 int qsort_data_idx(const void *a, const void *b) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
@@ -1534,17 +1537,16 @@ void* busca_binaria_teto(const void* key, void* base, size_t num, size_t size, i
 
 }
 
-void novo_usuarios_idx(int rrn) {
-
+void novo_usuarios_idx() {
+    int rrn = qtd_registros_usuarios-1;
     Usuario u = recuperar_registro_usuario(rrn);
-    if (strncmp(u.id_user, "*|", 2) == 0)
-        usuarios_idx[rrn].rrn = -1; // registro excluído
-    else{
-        strcpy(usuarios_idx[rrn].id_user, u.id_user);
-        usuarios_idx[rrn].rrn = rrn;
-    }
+
+    strcpy(usuarios_idx[rrn].id_user, u.id_user);
+    usuarios_idx[rrn].rrn = rrn;
+
     qsort(usuarios_idx, qtd_registros_usuarios, sizeof(usuarios_index), qsort_usuarios_idx);
 }
+
 
 void novo_jogos_idx() {
 
@@ -1578,13 +1580,4 @@ void copiaUsuario(Usuario a, Usuario b){
     strcpy(a.email, b.email);
     strcpy(a.celular, b.celular);
     a.saldo = b.saldo;
-}
-
-int bsearch_compras_idx(const void *a, const void *b) {
-    /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    if(strcmp( ( (compras_index *)a )->id_user, ( (compras_index *)b )->id_user) == 0 &&
-       strcmp( ( (compras_index *)a )->id_game, ( (compras_index *)b )->id_game) == 0){
-        return 0;
-    }
-    return 1;
 }
