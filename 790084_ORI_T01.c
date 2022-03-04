@@ -112,7 +112,7 @@ typedef struct {
     char id_game[TAM_ID_GAME];
     int rrn;
 } jogos_index;
-//todo
+
 /* Struct para índice primário dos compras */
 typedef struct {
     char id_user[TAM_ID_USER];
@@ -580,7 +580,7 @@ int main() {
     criar_compras_idx();
     criar_titulo_idx();
     criar_data_user_game_idx();
-//    criar_categorias_idx();
+    criar_categorias_idx();
 
     while (1) {
         fgets(input, 500, stdin);
@@ -727,7 +727,6 @@ void criar_compras_idx() {
         exit(1);
     }
     for (unsigned i = 0; i < qtd_registros_compras; ++i) {
-        //todo: recuperar resgistro
         Compra c = recuperar_registro_compra(i);
 
         if (strncmp(c.id_user_dono, "*|", 2) == 0)
@@ -781,7 +780,7 @@ void criar_data_user_game_idx() {
     }
     qsort(data_user_game_idx, qtd_registros_compras, sizeof(data_user_game_index), qsort_data_idx);
 }
-//todo
+
 /* Cria os índices (secundário e primário) de categorias_idx */
 void criar_categorias_idx() {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
@@ -807,12 +806,8 @@ void criar_categorias_idx() {
         Jogo j = recuperar_registro_jogo(i);
         //jogo possui categoria
         for (int k = 0; k < 3; ++k) {
-            //possui categoria
-            //todo como raios eu faço para mandar esse raios de struct como parametro
-            //todo ele ja foi criado??
-            //todo ta na linha 185
             if(strcmp(j.categorias[k], "") != 0) {
-                inverted_list_insert(j.categorias[k], j.id_game, inverted_list categorias_idx);
+                inverted_list_insert(j.categorias[k], j.id_game,  &categorias_idx);
             }
         }
     }
@@ -882,7 +877,13 @@ Usuario recuperar_registro_usuario(int rrn) {
 Jogo recuperar_registro_jogo(int rrn) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     Jogo j;
+
+    j.categorias[0][0] = '\0';
+    j.categorias[1][0] = '\0';
+    j.categorias[2][0] = '\0';
+
     char temp[TAM_REGISTRO_JOGO + 1], *p, *categorias;
+    categorias = "";
     strncpy(temp, ARQUIVO_JOGOS + (rrn * TAM_REGISTRO_JOGO), TAM_REGISTRO_JOGO);
     temp[TAM_REGISTRO_JOGO] = '\0';
 
@@ -898,21 +899,16 @@ Jogo recuperar_registro_jogo(int rrn) {
     strcpy(j.data_lancamento, p);
     p = strtok(NULL, ";");
     j.preco = atof(p);
-//    p = strtok(NULL, ";");
-//    strcpy(j.categorias, p);
-    //strcpy(categorias, p);
-//    p = strtok(NULL, ";");
+    p = strtok(NULL, "|;#");
 
-//    p = strtok(categorias, "|");
-//    strcpy(j.categorias[0], "|");
-//    p = strtok(NULL, "|");
-//    strcpy(j.categorias[1], "|");
-//    p = strtok(NULL, "|");
-//    strcpy(j.categorias[2], "|");
-//    p = strtok(NULL, "|");
+    int i = 0;
+    while(p) {
+        strcpy(j.categorias[i], p);
+        p = strtok(NULL, "|;#");
+        i++;
+    }
 
     return j;
-
 }
 
 /*  Recupera do arquivo de compras o registro com o RRN
@@ -976,7 +972,18 @@ void escrever_registro_jogo(Jogo j, int rrn) {
     strcat(temp, ";");
     sprintf(p, "%013.2lf", j.preco);
     strcat(temp, p);
-    strcat(temp, ";;");
+    strcat(temp, ";");
+
+    for (int i = 0; i < 3; ++i) {
+        if(strlen(j.categorias[i]) != 0) {
+            // Concatena um pipe antes de escrever a próxima categoria
+            if(i != 0) {
+                strcat(temp, "|");
+            }
+            strcat(temp, j.categorias[i]);
+        }
+    }
+    strcat(temp, ";");
 
     strpadright(temp, '#', TAM_REGISTRO_JOGO);
 
@@ -1073,6 +1080,10 @@ void cadastrar_jogo_menu(char *titulo, char *desenvolvedor, char *editora, char*
     strcpy(j.data_lancamento, lancamento);
     j.preco = preco;
 
+    strcpy(j.categorias[0], "\0");
+    strcpy(j.categorias[1], "\0");
+    strcpy(j.categorias[2], "\0");
+
     escrever_registro_jogo(j, qtd_registros_jogos++);
     novo_jogos_idx();
     novo_titulo_idx();
@@ -1155,10 +1166,41 @@ void comprar_menu(char *id_user, char *titulo) {
     printf(SUCESSO);
 }
 
-//todo
 void cadastrar_categoria_menu(char* titulo, char* categoria) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "cadastrar_categoria_menu");
+
+     titulos_index *tituloJogo =  busca_binaria(titulo, titulo_idx, qtd_registros_jogos, sizeof(*titulo_idx), qsort_titulo_idx, false);
+     if(!tituloJogo){
+         printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+         return;
+     }
+     jogos_index *idJogo =  busca_binaria(tituloJogo->id_game, jogos_idx, qtd_registros_jogos, sizeof(*jogos_idx), qsort_jogos_idx, false);
+
+
+
+    //Adcionamos todos os jogos que possuem categoria no índice primário
+    Jogo j = recuperar_registro_jogo(idJogo->rrn);
+
+
+    if(strcmp(j.categorias[0], categoria) == 0 || strcmp(j.categorias[1], categoria) == 0 || strcmp(j.categorias[2], categoria) == 0) {
+        printf(ERRO_CATEGORIA_REPETIDA, j.titulo, categoria);
+        return;
+    }
+
+    //adcionamos as categorias no rsgistro do jogo
+    if (strlen(j.categorias[0]) == 0) {
+        strcpy(j.categorias[0], categoria);
+    }
+    else if(strlen(j.categorias[1]) == 0) {
+        strcpy(j.categorias[1], categoria);
+    }
+    else {
+        strcpy(j.categorias[2], categoria);
+    }
+    escrever_registro_jogo(j, idJogo->rrn);
+
+    inverted_list_insert(categoria, j.id_game,  &categorias_idx);
+    printf(SUCESSO);
 }
 
 
@@ -1210,7 +1252,37 @@ void listar_usuarios_id_user_menu() {
 
 void listar_jogos_categorias_menu(char *categoria) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "listar_jogo_categorias_menu");
+    if(!categorias_idx.qtd_registros_secundario) {
+        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+        return;
+    }
+
+    int resultado;
+    //categoria não existe
+    if(!inverted_list_secondary_search(&resultado, false, categoria, &categorias_idx)) {
+        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+        return;
+    }
+    int qtd_listados = 0;
+    jogos_index jogos_listados[categorias_idx.qtd_registros_primario];
+    printf(REGS_PERCORRIDOS);
+
+    while(true) {
+        printf(" %d", resultado);
+        strcpy(jogos_listados[qtd_listados].id_game, categorias_idx.categorias_primario_idx[resultado].chave_primaria);
+        resultado = categorias_idx.categorias_primario_idx[resultado].proximo_indice;
+        qtd_listados++;
+        if(resultado == -1)
+            break;
+    }
+
+    printf("\n");
+    qsort(jogos_listados, qtd_listados, sizeof(jogos_index), qsort_jogos_idx);
+    for (int i = 0; i < qtd_listados; ++i) {
+        //Verificamos se o jogo exisre e se sim, exibimos seus dados
+        jogos_index *resultadoBusca = (jogos_index*) busca_binaria(jogos_listados[i].id_game, jogos_idx, qtd_registros_jogos, sizeof(jogos_index), qsort_jogos_idx, false);
+        exibir_jogo(resultadoBusca->rrn);
+    }
 }
 
 void listar_compras_periodo_menu(char *data_inicio, char *data_fim) {
@@ -1369,8 +1441,10 @@ void imprimir_categorias_primario_idx_menu() {
     if (categorias_idx.qtd_registros_primario == 0)
         printf(ERRO_ARQUIVO_VAZIO);
 
-    for (unsigned i = 0; i < categorias_idx.qtd_registros_primario; ++i)
+    for (unsigned i = 0; i < categorias_idx.qtd_registros_primario; ++i) {
         printf("%s, %d\n", (categorias_idx.categorias_primario_idx)[i].chave_primaria, (categorias_idx.categorias_primario_idx)[i].proximo_indice);
+
+    }
 }
 
 
@@ -1382,7 +1456,9 @@ void liberar_memoria_menu() {
     free(compras_idx);
     free(titulo_idx);
     free(data_user_game_idx);
-    //inverted list
+    free(categorias_idx.categorias_primario_idx);
+    free(categorias_idx.categorias_secundario_idx);
+
     exit(0);
 }
 
@@ -1425,49 +1501,50 @@ int qsort_data_user_game_idx(const void *a, const void *b) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     printf(ERRO_NAO_IMPLEMENTADO, "qsort_data_user_game_idx");
 }
-//todo
+
 /* Função de comparação entre chaves do índice secundário de categorias_idx */
 int qsort_categorias_secundario_idx(const void *a, const void *b) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     return strcmp( ( (categorias_secundario_index *)a )->chave_secundaria, ( (categorias_secundario_index *)b )->chave_secundaria);
 }
 
-//todo
 /* Funções de manipulação de Lista Invertida */
 void inverted_list_insert(char *chave_secundaria, char *chave_primaria, inverted_list *t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
 
     strcpy(t->categorias_primario_idx[t->qtd_registros_primario].chave_primaria, chave_primaria);
     //proximo indice do indice primario recebe -1
-    t->categorias_primario_idx[t->qtd_registros_primario].proximo_indice = -1;
+    t->categorias_primario_idx[t->qtd_registros_primario++].proximo_indice = -1;
 
-    int* resultado;
+    int resultado;
     //categoria não existe
-    if(!inverted_list_secondary_search(resultado, false, chave_secundaria, t)) {
-        //adcionamos a categoria ao indice e indicamos o indice ca categoria primaria
-        strcpy(t->categorias_secundario_idx[t->qtd_registros_secundario].chave_secundaria, chave_secundaria);
-        t->categorias_secundario_idx[t->qtd_registros_secundario].primeiro_indice = t->qtd_registros_primario;
 
-        t->qtd_registros_secundario++;
-        t->qtd_registros_primario++;
+    if(!inverted_list_secondary_search(&resultado, false, chave_secundaria, t)) {
+        //adcionamos a categoria ao indice e indicamos o indice ca categoria primaria
+        strcpy(t->categorias_secundario_idx[t->qtd_registros_secundario++].chave_secundaria, chave_secundaria);
+         t->categorias_secundario_idx[(t->qtd_registros_secundario)-1].primeiro_indice = (t->qtd_registros_primario) - 1;
+        qsort(t->categorias_secundario_idx, t->qtd_registros_secundario, sizeof(categorias_secundario_index), qsort_categorias_secundario_idx);
         return;
     }
-    //categoria existe
-    int idx_primario = *resultado;
+//    //categoria existe
+
+
     //ao chegar no inx primario -1, colocamos o indice do novo jogo
     while(true) {
-        if(t->categorias_primario_idx[idx_primario].proximo_indice == -1) {
-            t->categorias_primario_idx[idx_primario].proximo_indice = t->qtd_registros_primario;
-            t->qtd_registros_primario++;
+//        printf("\nidx_primario: %d\n", resultado);
+        //se a posição não apontar para ninguem
+        if(t->categorias_primario_idx[resultado].proximo_indice == -1) {
+            t->categorias_primario_idx[resultado].proximo_indice = t->qtd_registros_primario -1;
             qsort(t->categorias_secundario_idx, t->qtd_registros_secundario, sizeof(categorias_secundario_index), qsort_categorias_secundario_idx);
             return;
         }
+        resultado = t->categorias_primario_idx[resultado].proximo_indice;
     }
 }
 
 bool inverted_list_secondary_search(int *result, bool exibir_caminho, char *chave_secundaria, inverted_list *t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    categorias_secundario_index *categoria =  (categorias_secundario_index*) busca_binaria(chave_secundaria, t->categorias_secundario_idx, t->qtd_registros_secundario,
+    categorias_secundario_index *categoria = busca_binaria(chave_secundaria, t->categorias_secundario_idx, t->qtd_registros_secundario,
                   sizeof(categorias_secundario_index), qsort_categorias_secundario_idx, exibir_caminho);
 
     if(categoria) {
@@ -1572,7 +1649,6 @@ void* busca_binaria_teto(const void* key, void* base, size_t num, size_t size, i
         //move pra esquerda
     }
 
-    //todo
     //se for menor
     if(cmp > 0){
         if(p == base + (size*num) - size) {
