@@ -525,9 +525,13 @@ void* busca_binaria_teto(const void* key, void* base, size_t num, size_t size, i
 void novo_usuarios_idx();
 void novo_jogos_idx();
 void novo_titulo_idx();
+void nova_compra_idx();
+void novo_data_user_game_idx();
 
 /* realiza a copia dos dados do Usuario b para o Usuario a*/
 void copiaUsuario(Usuario a, Usuario b);
+
+int qsort_categoria_primaria_idx(const void *a, const void *b);
 
 
 /* ==========================================================================
@@ -576,7 +580,7 @@ int main() {
     set_time(time);
 
     criar_usuarios_idx();
-   criar_jogos_idx();
+    criar_jogos_idx();
     criar_compras_idx();
     criar_titulo_idx();
     criar_data_user_game_idx();
@@ -786,7 +790,7 @@ void criar_categorias_idx() {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     //Alocamos o Indice primário
     if(!categorias_idx.categorias_primario_idx) {
-        categorias_idx.categorias_primario_idx = malloc(TAM_ARQUIVO_CATEGORIAS_IDX * sizeof(categorias_primario_index));
+        categorias_idx.categorias_primario_idx = malloc(MAX_REGISTROS * sizeof(categorias_primario_index));
     }
     if (!categorias_idx.categorias_primario_idx) {
         printf(ERRO_MEMORIA_INSUFICIENTE);
@@ -794,7 +798,7 @@ void criar_categorias_idx() {
     }
     //Alocamos o Indice primário
     if(!categorias_idx.categorias_secundario_idx) {
-        categorias_idx.categorias_secundario_idx = malloc(TAM_ARQUIVO_CATEGORIAS_IDX * sizeof(categorias_secundario_index));
+        categorias_idx.categorias_secundario_idx = malloc(MAX_REGISTROS * sizeof(categorias_secundario_index));
     }
     if (!categorias_idx.categorias_secundario_idx) {
         printf(ERRO_MEMORIA_INSUFICIENTE);
@@ -806,7 +810,7 @@ void criar_categorias_idx() {
         Jogo j = recuperar_registro_jogo(i);
         //jogo possui categoria
         for (int k = 0; k < 3; ++k) {
-            if(strcmp(j.categorias[k], "") != 0) {
+            if(strlen(j.categorias[k]) != 0) {
                 inverted_list_insert(j.categorias[k], j.id_game,  &categorias_idx);
             }
         }
@@ -1161,8 +1165,9 @@ void comprar_menu(char *id_user, char *titulo) {
 
     //salvamos a compra no arquivo e atualizamos os indices de compras
     escrever_registro_compra(c, qtd_registros_compras++);
-    criar_compras_idx();
-    criar_data_user_game_idx();
+    //todo
+    nova_compra_idx();
+    novo_data_user_game_idx();
     printf(SUCESSO);
 }
 
@@ -1263,24 +1268,22 @@ void listar_jogos_categorias_menu(char *categoria) {
         printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
         return;
     }
-    int qtd_listados = 0;
+
     jogos_index jogos_listados[categorias_idx.qtd_registros_primario];
     printf(REGS_PERCORRIDOS);
+    char result[categorias_idx.qtd_registros_primario][TAM_CHAVE_CATEGORIAS_PRIMARIO_IDX];
 
-    while(true) {
-        printf(" %d", resultado);
-        strcpy(jogos_listados[qtd_listados].id_game, categorias_idx.categorias_primario_idx[resultado].chave_primaria);
-        resultado = categorias_idx.categorias_primario_idx[resultado].proximo_indice;
-        qtd_listados++;
-        if(resultado == -1)
-            break;
-    }
-
+    int qtd_listados = inverted_list_primary_search(result, true, resultado, NULL, &categorias_idx);
     printf("\n");
-    qsort(jogos_listados, qtd_listados, sizeof(jogos_index), qsort_jogos_idx);
+
+    qsort(result, qtd_listados, TAM_CHAVE_CATEGORIAS_PRIMARIO_IDX, qsort_categoria_primaria_idx);
     for (int i = 0; i < qtd_listados; ++i) {
         //Verificamos se o jogo exisre e se sim, exibimos seus dados
-        jogos_index *resultadoBusca = (jogos_index*) busca_binaria(jogos_listados[i].id_game, jogos_idx, qtd_registros_jogos, sizeof(jogos_index), qsort_jogos_idx, false);
+        char temp[TAM_CHAVE_CATEGORIAS_PRIMARIO_IDX + 1];
+        strncpy(temp, result[i], TAM_CHAVE_CATEGORIAS_PRIMARIO_IDX);
+        temp[TAM_CHAVE_CATEGORIAS_PRIMARIO_IDX] = '\0';
+
+        jogos_index *resultadoBusca = (jogos_index*) busca_binaria(temp, jogos_idx, qtd_registros_jogos, sizeof(jogos_index), qsort_jogos_idx, false);
         exibir_jogo(resultadoBusca->rrn);
     }
 }
@@ -1499,7 +1502,8 @@ int qsort_data_idx(const void *a, const void *b) {
 
 int qsort_data_user_game_idx(const void *a, const void *b) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "qsort_data_user_game_idx");
+    //não sei onde usar essa função
+    return strcmp( ( (data_user_game_index *)a )->id_user, ( (data_user_game_index *)b )->id_user);
 }
 
 /* Função de comparação entre chaves do índice secundário de categorias_idx */
@@ -1555,8 +1559,19 @@ bool inverted_list_secondary_search(int *result, bool exibir_caminho, char *chav
 }
 
 int inverted_list_primary_search(char result[][TAM_CHAVE_CATEGORIAS_PRIMARIO_IDX], bool exibir_caminho, int indice, int *indice_final, inverted_list *t) {
-    /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "inverted_list_primary_search");
+    int qtd_listados = 0;
+    while(true) {
+        if(exibir_caminho)
+            printf(" %d", indice);
+
+        strncpy(result[qtd_listados], t->categorias_primario_idx[indice].chave_primaria, TAM_CHAVE_CATEGORIAS_PRIMARIO_IDX);
+        if (indice_final) (*indice_final) = indice;
+        indice = t->categorias_primario_idx[indice].proximo_indice;
+        qtd_listados++;
+        if(indice == -1) {
+            return qtd_listados;
+        }
+    }
 }
 
 char* strpadright(char *str, char pad, unsigned size) {
@@ -1706,10 +1721,40 @@ void novo_titulo_idx() {
 
 }
 
+void nova_compra_idx() {
+    //atualizamos a ultima posição do index com o nova compra
+
+
+    Compra c = recuperar_registro_compra(qtd_registros_compras-1);
+
+    compras_idx[qtd_registros_compras-1].rrn = qtd_registros_compras-1;
+
+    strcpy(compras_idx[qtd_registros_compras-1].id_user, c.id_user_dono);
+    strcpy(compras_idx[qtd_registros_compras-1].id_game, c.id_game);
+
+    qsort(compras_idx, qtd_registros_compras, sizeof(compras_index), qsort_compras_idx);
+
+}
+
+void novo_data_user_game_idx() {
+    Compra c = recuperar_registro_compra(qtd_registros_compras-1);
+
+    strcpy(data_user_game_idx[qtd_registros_compras-1].id_user, c.id_user_dono);
+    strcpy(data_user_game_idx[qtd_registros_compras-1].id_game, c.id_game);
+    strcpy(data_user_game_idx[qtd_registros_compras-1].data, c.data_compra);
+
+    qsort(data_user_game_idx, qtd_registros_compras, sizeof(data_user_game_index), qsort_data_idx);
+}
+
 void copiaUsuario(Usuario a, Usuario b){
     strcpy(a.id_user, b.id_user);
     strcpy(a.username, b.username);
     strcpy(a.email, b.email);
     strcpy(a.celular, b.celular);
     a.saldo = b.saldo;
+}
+
+int qsort_categoria_primaria_idx(const void *a, const void *b) {
+    /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
+    return strcmp( ( (char *)a ), ( (char *)b ));
 }
