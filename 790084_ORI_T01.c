@@ -112,7 +112,7 @@ typedef struct {
     char id_game[TAM_ID_GAME];
     int rrn;
 } jogos_index;
-//todo
+
 /* Struct para índice primário dos compras */
 typedef struct {
     char id_user[TAM_ID_USER];
@@ -519,15 +519,18 @@ void* busca_binaria_piso(const void* key, void* base, size_t num, size_t size, i
 void* busca_binaria_teto(const void* key, void* base, size_t num, size_t size, int (*compar)(const void*,const void*));
 
 /* <<< COLOQUE AQUI OS DEMAIS PROTÓTIPOS DE FUNÇÕES, SE NECESSÁRIO >>> */
-//atualiza o index ao inserir um novo usuario
 
-/* cria um novo usuário/jogo/compra em seus respectivos índices*/
+/* cria um novo usuário/jogo/compra em seus respectivos índices e atualiza os indices*/
 void novo_usuarios_idx();
 void novo_jogos_idx();
 void novo_titulo_idx();
+void nova_compra_idx();
+void novo_data_user_game_idx();
 
 /* realiza a copia dos dados do Usuario b para o Usuario a*/
 void copiaUsuario(Usuario a, Usuario b);
+//função auxiliar para o qsort realizado usando duas strings como comparação
+int qsort_categoria_primaria_idx(const void *a, const void *b);
 
 
 /* ==========================================================================
@@ -576,11 +579,11 @@ int main() {
     set_time(time);
 
     criar_usuarios_idx();
-   criar_jogos_idx();
+    criar_jogos_idx();
     criar_compras_idx();
     criar_titulo_idx();
     criar_data_user_game_idx();
-//    criar_categorias_idx();
+    criar_categorias_idx();
 
     while (1) {
         fgets(input, 500, stdin);
@@ -695,6 +698,7 @@ void criar_usuarios_idx() {
 
 /* Cria o índice primário jogos_idx */
 void criar_jogos_idx() {
+    //alocamos memoria para o idx de jogo
     if(!jogos_idx) {
         jogos_idx = malloc(MAX_REGISTROS * sizeof(jogos_index));
     }
@@ -702,6 +706,7 @@ void criar_jogos_idx() {
         printf(ERRO_MEMORIA_INSUFICIENTE);
         exit(1);
     }
+    //recuperamos cada jogos do arquivo de jogos e adcionamos ao  index de jogos e ordenamos o index por id
     for (unsigned i = 0; i < qtd_registros_jogos; ++i) {
         Jogo j = recuperar_registro_jogo(i);
 
@@ -726,8 +731,8 @@ void criar_compras_idx() {
         printf(ERRO_MEMORIA_INSUFICIENTE);
         exit(1);
     }
+    //recuperamos cada compra do arquivo de compras e adcionamos ao  index de compras e ordenamos o index
     for (unsigned i = 0; i < qtd_registros_compras; ++i) {
-        //todo: recuperar resgistro
         Compra c = recuperar_registro_compra(i);
 
         if (strncmp(c.id_user_dono, "*|", 2) == 0)
@@ -752,6 +757,7 @@ void criar_titulo_idx() {
         printf(ERRO_MEMORIA_INSUFICIENTE);
         exit(1);
     }
+    //recuperamos cada jogos do arquivo de jogos e adcionamos ao  index de jogos e ordenamos o index por titulo
     for (unsigned i = 0; i < qtd_registros_jogos; ++i) {
         Jogo j = recuperar_registro_jogo(i);
 
@@ -785,7 +791,33 @@ void criar_data_user_game_idx() {
 /* Cria os índices (secundário e primário) de categorias_idx */
 void criar_categorias_idx() {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "criar_categorias_idx");
+    //Alocamos o Indice primário
+    if(!categorias_idx.categorias_primario_idx) {
+        categorias_idx.categorias_primario_idx = malloc(MAX_REGISTROS * sizeof(categorias_primario_index));
+    }
+    if (!categorias_idx.categorias_primario_idx) {
+        printf(ERRO_MEMORIA_INSUFICIENTE);
+        exit(1);
+    }
+    //Alocamos o Indice primário
+    if(!categorias_idx.categorias_secundario_idx) {
+        categorias_idx.categorias_secundario_idx = malloc(MAX_REGISTROS * sizeof(categorias_secundario_index));
+    }
+    if (!categorias_idx.categorias_secundario_idx) {
+        printf(ERRO_MEMORIA_INSUFICIENTE);
+        exit(1);
+    }
+
+    //Adcionamos todos os jogos que possuem categoria no índice primário
+    for (unsigned i = 0; i < qtd_registros_jogos; ++i) {
+        Jogo j = recuperar_registro_jogo(i);
+        //jogo possui categoria
+        for (int k = 0; k < 3; ++k) {
+            if(strlen(j.categorias[k]) != 0) {
+                inverted_list_insert(j.categorias[k], j.id_game,  &categorias_idx);
+            }
+        }
+    }
 }
 
 
@@ -852,7 +884,13 @@ Usuario recuperar_registro_usuario(int rrn) {
 Jogo recuperar_registro_jogo(int rrn) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     Jogo j;
+    //iniciamos as categorias como vazias
+    j.categorias[0][0] = '\0';
+    j.categorias[1][0] = '\0';
+    j.categorias[2][0] = '\0';
+
     char temp[TAM_REGISTRO_JOGO + 1], *p, *categorias;
+    categorias = "";
     strncpy(temp, ARQUIVO_JOGOS + (rrn * TAM_REGISTRO_JOGO), TAM_REGISTRO_JOGO);
     temp[TAM_REGISTRO_JOGO] = '\0';
 
@@ -868,21 +906,17 @@ Jogo recuperar_registro_jogo(int rrn) {
     strcpy(j.data_lancamento, p);
     p = strtok(NULL, ";");
     j.preco = atof(p);
-//    p = strtok(NULL, ";");
-//    strcpy(j.categorias, p);
-    //strcpy(categorias, p);
-//    p = strtok(NULL, ";");
+    p = strtok(NULL, "|;#");
 
-//    p = strtok(categorias, "|");
-//    strcpy(j.categorias[0], "|");
-//    p = strtok(NULL, "|");
-//    strcpy(j.categorias[1], "|");
-//    p = strtok(NULL, "|");
-//    strcpy(j.categorias[2], "|");
-//    p = strtok(NULL, "|");
+    int i = 0;
+    //adcionamos as categoria, caso existam ao Jogo j
+    while(p) {
+        strcpy(j.categorias[i], p);
+        p = strtok(NULL, "|;#");
+        i++;
+    }
 
     return j;
-
 }
 
 /*  Recupera do arquivo de compras o registro com o RRN
@@ -891,9 +925,11 @@ Compra recuperar_registro_compra(int rrn) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     Compra c;
     char temp[TAM_REGISTRO_COMPRA + 1];
+//    copiamos a compra do arquivo para a String temporaria
     strncpy(temp, ARQUIVO_COMPRAS + (rrn * TAM_REGISTRO_COMPRA), TAM_REGISTRO_COMPRA);
     temp[TAM_REGISTRO_COMPRA] = '\0';
 
+    //copiamos os dados da compra na Atring para a struct compra e a retornamos
     strncpy(c.id_user_dono, temp,12);
     c.id_user_dono[11] = '\0';
     strncpy(c.data_compra, temp+11,8);
@@ -946,10 +982,23 @@ void escrever_registro_jogo(Jogo j, int rrn) {
     strcat(temp, ";");
     sprintf(p, "%013.2lf", j.preco);
     strcat(temp, p);
-    strcat(temp, ";;");
+    strcat(temp, ";");
 
+    //verificamos se há categorias
+    for (int i = 0; i < 3; ++i) {
+        if(strlen(j.categorias[i]) != 0) {
+            // Concatena um pipe antes de escrever a próxima categoria
+            if(i != 0) {
+                strcat(temp, "|");
+            }
+            strcat(temp, j.categorias[i]);
+        }
+    }
+    strcat(temp, ";");
+
+    //completamos o resgistor com ##
     strpadright(temp, '#', TAM_REGISTRO_JOGO);
-
+    //escrevemos o jogo no arquivo
     strncpy(ARQUIVO_JOGOS + rrn*TAM_REGISTRO_JOGO, temp, TAM_REGISTRO_JOGO);
     ARQUIVO_JOGOS[qtd_registros_jogos*TAM_REGISTRO_JOGO] = '\0';
 }
@@ -958,13 +1007,13 @@ void escrever_registro_jogo(Jogo j, int rrn) {
  * os dados na struct Compra */
 void escrever_registro_compra(Compra c, int rrn) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-
+//    copiamos os dados da struct comprar para uma String temporaria
     char temp[TAM_REGISTRO_COMPRA + 1];
     temp[0] = '\0';
     strcpy(temp, c.id_user_dono);
     strcat(temp, c.data_compra);
     strcat(temp, c.id_game);
-
+    //escrevemos a compra no arquivo
     strncpy(ARQUIVO_COMPRAS + rrn*TAM_REGISTRO_COMPRA, temp, TAM_REGISTRO_COMPRA);
     ARQUIVO_COMPRAS[qtd_registros_compras*TAM_REGISTRO_COMPRA] = '\0';
 }
@@ -1030,11 +1079,12 @@ void remover_usuario_menu(char *id_user) {
 
 void cadastrar_jogo_menu(char *titulo, char *desenvolvedor, char *editora, char* lancamento, double preco) {
 /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
+//verificamos se o jogo ja não está cadastrado
     if(busca_binaria(titulo, titulo_idx, qtd_registros_jogos, sizeof(*titulo_idx), qsort_titulo_idx, false)) {
         printf(ERRO_PK_REPETIDA, titulo);
         return;
     }
-
+    //criamos o jogos e passamos os parametros da função par a ele
     Jogo j;
     sprintf(j.id_game, "%08d", qtd_registros_jogos);
     strcpy(j.titulo, titulo);
@@ -1042,7 +1092,11 @@ void cadastrar_jogo_menu(char *titulo, char *desenvolvedor, char *editora, char*
     strcpy(j.editora, editora);
     strcpy(j.data_lancamento, lancamento);
     j.preco = preco;
-
+    //iniciamos as categorias como vazias
+    strcpy(j.categorias[0], "\0");
+    strcpy(j.categorias[1], "\0");
+    strcpy(j.categorias[2], "\0");
+    //salvamos o jogo no arquivo e atualizamos os indexes de jogo
     escrever_registro_jogo(j, qtd_registros_jogos++);
     novo_jogos_idx();
     novo_titulo_idx();
@@ -1120,21 +1174,54 @@ void comprar_menu(char *id_user, char *titulo) {
 
     //salvamos a compra no arquivo e atualizamos os indices de compras
     escrever_registro_compra(c, qtd_registros_compras++);
-    criar_compras_idx();
-    criar_data_user_game_idx();
+    //todo
+    nova_compra_idx();
+    novo_data_user_game_idx();
     printf(SUCESSO);
 }
 
-//todo
 void cadastrar_categoria_menu(char* titulo, char* categoria) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "cadastrar_categoria_menu");
+
+    //verificamos se o jogo a qual deseja-se cadastrar na categoria existe
+     titulos_index *tituloJogo =  busca_binaria(titulo, titulo_idx, qtd_registros_jogos, sizeof(*titulo_idx), qsort_titulo_idx, false);
+     if(!tituloJogo){
+         printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+         return;
+     }
+     //obtemos o id do game
+     jogos_index *idJogo =  busca_binaria(tituloJogo->id_game, jogos_idx, qtd_registros_jogos, sizeof(*jogos_idx), qsort_jogos_idx, false);
+
+    Jogo j = recuperar_registro_jogo(idJogo->rrn);
+
+    //verificamos se o jogo ja possui tal categoria
+    if(strcmp(j.categorias[0], categoria) == 0 || strcmp(j.categorias[1], categoria) == 0 || strcmp(j.categorias[2], categoria) == 0) {
+        printf(ERRO_CATEGORIA_REPETIDA, j.titulo, categoria);
+        return;
+    }
+
+    //adcionamos as categorias no registro do jogo, da primeira posição até a terceira caso ja tenha sido preenchida
+    if (strlen(j.categorias[0]) == 0) {
+        strcpy(j.categorias[0], categoria);
+    }
+    else if(strlen(j.categorias[1]) == 0) {
+        strcpy(j.categorias[1], categoria);
+    }
+    else {
+        strcpy(j.categorias[2], categoria);
+    }
+//    salvamos as alterações do arquivo
+    escrever_registro_jogo(j, idJogo->rrn);
+//    atualizamos a lista invertida de categorias
+    inverted_list_insert(categoria, j.id_game,  &categorias_idx);
+    printf(SUCESSO);
 }
 
 
 /* Busca */
 
 void buscar_usuario_id_user_menu(char *id_user) {
+    //buscamos um usuario a partir de seu user_id
     usuarios_index *resultadoBusca = (usuarios_index*) busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, true);
     if (resultadoBusca) {
         exibir_usuario(resultadoBusca->rrn);
@@ -1180,7 +1267,37 @@ void listar_usuarios_id_user_menu() {
 
 void listar_jogos_categorias_menu(char *categoria) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "listar_jogo_categorias_menu");
+    if(!categorias_idx.qtd_registros_secundario) {
+        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+        return;
+    }
+
+    //caso a categoria exista salvamos seu indice em resultado
+    int resultado;
+    //categoria não existe
+    if(!inverted_list_secondary_search(&resultado, false, categoria, &categorias_idx)) {
+        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+        return;
+    }
+
+    printf(REGS_PERCORRIDOS);
+    //criamos um array em que salvaremos todos os jogos da categoria
+    char result[categorias_idx.qtd_registros_primario][TAM_CHAVE_CATEGORIAS_PRIMARIO_IDX];
+
+    //percorremos o indice primario da lista invertida
+    int qtd_listados = inverted_list_primary_search(result, true, resultado, NULL, &categorias_idx);
+    printf("\n");
+    //ordenamos a lista de jogos contidos na categoria por ordem lexografica
+    qsort(result, qtd_listados, TAM_CHAVE_CATEGORIAS_PRIMARIO_IDX, qsort_categoria_primaria_idx);
+    for (int i = 0; i < qtd_listados; ++i) {
+        //Verificamos se o jogo exisre e se sim, exibimos seus dados
+        char temp[TAM_CHAVE_CATEGORIAS_PRIMARIO_IDX + 1];
+        strncpy(temp, result[i], TAM_CHAVE_CATEGORIAS_PRIMARIO_IDX);
+        temp[TAM_CHAVE_CATEGORIAS_PRIMARIO_IDX] = '\0';
+
+        jogos_index *resultadoBusca = (jogos_index*) busca_binaria(temp, jogos_idx, qtd_registros_jogos, sizeof(jogos_index), qsort_jogos_idx, false);
+        exibir_jogo(resultadoBusca->rrn);
+    }
 }
 
 void listar_compras_periodo_menu(char *data_inicio, char *data_fim) {
@@ -1339,20 +1456,25 @@ void imprimir_categorias_primario_idx_menu() {
     if (categorias_idx.qtd_registros_primario == 0)
         printf(ERRO_ARQUIVO_VAZIO);
 
-    for (unsigned i = 0; i < categorias_idx.qtd_registros_primario; ++i)
+    for (unsigned i = 0; i < categorias_idx.qtd_registros_primario; ++i) {
         printf("%s, %d\n", (categorias_idx.categorias_primario_idx)[i].chave_primaria, (categorias_idx.categorias_primario_idx)[i].proximo_indice);
+
+    }
 }
 
 
 /* Liberar memória e encerrar programa */
 
 void liberar_memoria_menu() {
+    //liberamos toda a maemoria alocada
     free(usuarios_idx);
     free(jogos_idx);
     free(compras_idx);
     free(titulo_idx);
     free(data_user_game_idx);
-    //inverted list
+    free(categorias_idx.categorias_primario_idx);
+    free(categorias_idx.categorias_secundario_idx);
+
     exit(0);
 }
 
@@ -1393,30 +1515,74 @@ int qsort_data_idx(const void *a, const void *b) {
 
 int qsort_data_user_game_idx(const void *a, const void *b) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "qsort_data_user_game_idx");
+    //não sei onde usar essa função
+    return strcmp( ( (data_user_game_index *)a )->id_user, ( (data_user_game_index *)b )->id_user);
 }
 
 /* Função de comparação entre chaves do índice secundário de categorias_idx */
 int qsort_categorias_secundario_idx(const void *a, const void *b) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "qsort_categorias_secundario_idx");
+    return strcmp( ( (categorias_secundario_index *)a )->chave_secundaria, ( (categorias_secundario_index *)b )->chave_secundaria);
 }
-
 
 /* Funções de manipulação de Lista Invertida */
 void inverted_list_insert(char *chave_secundaria, char *chave_primaria, inverted_list *t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "inverted_list_insert");
+//    adcionamos a chave primaria na ultima posição do indice primario
+    strcpy(t->categorias_primario_idx[t->qtd_registros_primario].chave_primaria, chave_primaria);
+    //proximo indice do indice primario recebe -1, indicando ser o último
+    t->categorias_primario_idx[t->qtd_registros_primario++].proximo_indice = -1;
+
+    int resultado;
+    //categoria não existe
+    if(!inverted_list_secondary_search(&resultado, false, chave_secundaria, t)) {
+        //adcionamos a categoria ao indice e indicamos o indice da categoria primaria
+        strcpy(t->categorias_secundario_idx[t->qtd_registros_secundario++].chave_secundaria, chave_secundaria);
+         t->categorias_secundario_idx[(t->qtd_registros_secundario)-1].primeiro_indice = (t->qtd_registros_primario) - 1;
+         //ordenamos o index secundario
+        qsort(t->categorias_secundario_idx, t->qtd_registros_secundario, sizeof(categorias_secundario_index), qsort_categorias_secundario_idx);
+        return;
+    }
+    //categoria existe
+    int indice_final;
+    //buscamos o indice do ultimo elemento listado, e fazemo-os o apontar para o nome elemnto do indice primário
+    inverted_list_primary_search(NULL, false, resultado, &indice_final, t);
+    t->categorias_primario_idx[indice_final].proximo_indice = t->qtd_registros_primario-1;
+    qsort(t->categorias_secundario_idx, t->qtd_registros_secundario, sizeof(categorias_secundario_index), qsort_categorias_secundario_idx);
 }
 
 bool inverted_list_secondary_search(int *result, bool exibir_caminho, char *chave_secundaria, inverted_list *t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "inverted_list_secondary_search");
+    //buscamos a categoria do inice secundario da lista invertida
+    categorias_secundario_index *categoria = busca_binaria(chave_secundaria, t->categorias_secundario_idx, t->qtd_registros_secundario,
+                  sizeof(categorias_secundario_index), qsort_categorias_secundario_idx, exibir_caminho);
+    //se achamos retornamos verdadeiro se não falso
+    if(categoria) {
+        *result = categoria->primeiro_indice;
+        return true;
+    }
+    return false;
 }
 
 int inverted_list_primary_search(char result[][TAM_CHAVE_CATEGORIAS_PRIMARIO_IDX], bool exibir_caminho, int indice, int *indice_final, inverted_list *t) {
-    /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "inverted_list_primary_search");
+    int qtd_listados = 0;
+    while(true) {
+        //verificamos se o usuário deseja exibir o caminho percorrido
+        if(exibir_caminho)
+            printf(" %d", indice);
+        //verificamos se o usuario quer saber as chaves primarias percorridas
+        if(result)
+            strncpy(result[qtd_listados], t->categorias_primario_idx[indice].chave_primaria, TAM_CHAVE_CATEGORIAS_PRIMARIO_IDX);
+        //verificamos se o usuario quer saber o indice da ultima posição
+        if (indice_final)
+            (*indice_final) = indice;
+        //passamos para o proximo indice, até que este seja -1
+        indice = t->categorias_primario_idx[indice].proximo_indice;
+        qtd_listados++;
+        if(indice == -1) {
+            return qtd_listados;
+        }
+    }
 }
 
 char* strpadright(char *str, char pad, unsigned size) {
@@ -1428,6 +1594,7 @@ char* strpadright(char *str, char pad, unsigned size) {
 
 void* busca_binaria(const void *key, const void *base0, size_t nmemb, size_t size, int (*compar)(const void *, const void *), bool exibir_caminho) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
+    //baseado o bseach
     const void *base =  base0;
     int lim, cmp;
     const void *p;
@@ -1437,7 +1604,7 @@ void* busca_binaria(const void *key, const void *base0, size_t nmemb, size_t siz
 
     for (lim = (int)nmemb; lim != 0 ; lim = lim/2) { //move o cabeçote para a direta, dividindo por 2 >>= 1
         p = base + (lim / 2) * size; //meio do vetor
-        int rrn = (p - base0)/size;
+        int rrn = (p - base0)/size; //calculamos o rrn
         if(exibir_caminho) {
             printf(" %d",rrn); //como que eu vou imprimir o rrn se o tipo de dado é abstrato
         }
@@ -1461,6 +1628,8 @@ void* busca_binaria(const void *key, const void *base0, size_t nmemb, size_t siz
     }
     return NULL;
 }
+
+//verificando o git
 
 void* busca_binaria_piso(const void* key, void* base, size_t num, size_t size, int (*compar)(const void*,const void*)) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
@@ -1509,7 +1678,6 @@ void* busca_binaria_teto(const void* key, void* base, size_t num, size_t size, i
         //move pra esquerda
     }
 
-    //todo
     //se for menor
     if(cmp > 0){
         if(p == base + (size*num) - size) {
@@ -1541,7 +1709,6 @@ void novo_usuarios_idx() {
 
 void novo_jogos_idx() {
     //atualizamos a ultima posição do index com o novo jogo
-
     int rrn = qtd_registros_jogos-1;
     Jogo j = recuperar_registro_jogo(rrn);
 
@@ -1549,22 +1716,37 @@ void novo_jogos_idx() {
     jogos_idx[rrn].rrn = rrn;
 
     qsort(jogos_idx, qtd_registros_jogos, sizeof(jogos_index), qsort_jogos_idx);
-
 }
 
 void novo_titulo_idx() {
     //atualizamos a ultima posição do index com o novo jogo
-
     int rrn = qtd_registros_jogos -1;
-
     Jogo j = recuperar_registro_jogo(rrn);
 
     strcpy(titulo_idx[rrn].titulo, j.titulo);
-
     strcpy(titulo_idx[rrn].id_game, j.id_game);
-
     qsort(titulo_idx, qtd_registros_jogos, sizeof(titulos_index), qsort_titulo_idx);
+}
 
+void nova_compra_idx() {
+    //atualizamos a ultima posição do index com o nova compra
+    Compra c = recuperar_registro_compra(qtd_registros_compras-1);
+    compras_idx[qtd_registros_compras-1].rrn = qtd_registros_compras-1;
+
+    strcpy(compras_idx[qtd_registros_compras-1].id_user, c.id_user_dono);
+    strcpy(compras_idx[qtd_registros_compras-1].id_game, c.id_game);
+
+    qsort(compras_idx, qtd_registros_compras, sizeof(compras_index), qsort_compras_idx);
+}
+
+void novo_data_user_game_idx() {
+    Compra c = recuperar_registro_compra(qtd_registros_compras-1);
+
+    strcpy(data_user_game_idx[qtd_registros_compras-1].id_user, c.id_user_dono);
+    strcpy(data_user_game_idx[qtd_registros_compras-1].id_game, c.id_game);
+    strcpy(data_user_game_idx[qtd_registros_compras-1].data, c.data_compra);
+
+    qsort(data_user_game_idx, qtd_registros_compras, sizeof(data_user_game_index), qsort_data_idx);
 }
 
 void copiaUsuario(Usuario a, Usuario b){
@@ -1573,4 +1755,8 @@ void copiaUsuario(Usuario a, Usuario b){
     strcpy(a.email, b.email);
     strcpy(a.celular, b.celular);
     a.saldo = b.saldo;
+}
+
+int qsort_categoria_primaria_idx(const void *a, const void *b) {
+    return strcmp( ( (char *)a ), ( (char *)b ));
 }
