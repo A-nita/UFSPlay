@@ -1340,24 +1340,48 @@ bool btree_print_in_order(char *chave_inicio, char *chave_fim, bool (*exibir)(ch
 //todo
 btree_node btree_read(int rrn, btree *t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    btree_node no;
-    char temp[btree_register_size(t) + 1], aux[btree_register_size(t)];
+    btree_node no = btree_node_malloc(t);
+    char temp[btree_register_size(t) + 1], aux[btree_register_size(t)], *p;
+    p = temp;
+    //copiamos do arquivo para a String temporaria
     strncpy(temp, t->arquivo + (rrn * btree_register_size(t)), btree_register_size(t));
     temp[btree_register_size(t)] = '\0';
-    strncpy(aux, temp, 3);
+    strncpy(aux, p, 3);
     aux[4] = '\0';
     no.qtd_chaves = atoi(aux);
-    int i;
-    for (i = 0; i < btree_order-1; ++i) {
-        if(temp[3 +(i*t->tam_chave)] == '#') {
+    p += 3;
+    //chaves
+    for (int i = 0; i < btree_order-1; ++i) {
+        if(p[0] == '#') {
             no.chaves[i][0] = '\0';
         }
         else {
-            strncpy(no.chaves[i], temp, t->tam_chave);
+            strncpy(no.chaves[i], p, t->tam_chave);
         }
-
-        printf("\nchave %i: %s\n", i, no.chaves[i]);
+        p += t->tam_chave;
     }
+
+    //folha ou não
+    if(p[0] == 'F'){
+        no.folha = false;
+    }
+    else {
+        no.folha = true;
+    }
+
+    //filhos
+    for (int i = 0; i < btree_order; ++i) {
+        if(p[0] == '*') {
+            no.filhos[i] = -1;
+        }
+        else {
+            strncpy(aux, p, 3);
+            no.filhos[i] = atoi(aux);
+        }
+        p += 3;
+    }
+    no.this_rrn = rrn;
+
 }
 
 
