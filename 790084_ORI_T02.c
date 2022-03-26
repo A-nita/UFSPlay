@@ -1266,8 +1266,13 @@ void btree_insert(char *chave, btree *t) {
         strcpy(no.chaves[0], chave);
         no.qtd_chaves = 1;
         btree_write(no, t);
+        btree_node_free(no);
+
     }
-    printf(ERRO_NAO_IMPLEMENTADO, "btree_insert");
+    else{
+        btree_read(0, t);
+    }
+//    printf(ERRO_NAO_IMPLEMENTADO, "btree_insert");
 }
 
 promovido_aux btree_insert_aux(char *chave, int rrn, btree *t) {
@@ -1332,11 +1337,29 @@ bool btree_print_in_order(char *chave_inicio, char *chave_fim, bool (*exibir)(ch
     printf(ERRO_NAO_IMPLEMENTADO, "btree_print_in_order");
     return false;
 }
-
+//todo
 btree_node btree_read(int rrn, btree *t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "btree_read");
+    btree_node no;
+    char temp[btree_register_size(t) + 1], aux[btree_register_size(t)];
+    strncpy(temp, t->arquivo + (rrn * btree_register_size(t)), btree_register_size(t));
+    temp[btree_register_size(t)] = '\0';
+    strncpy(aux, temp, 3);
+    aux[4] = '\0';
+    no.qtd_chaves = atoi(aux);
+    int i;
+    for (i = 0; i < btree_order-1; ++i) {
+        if(temp[3 +(i*t->tam_chave)] == '#') {
+            no.chaves[i][0] = '\0';
+        }
+        else {
+            strncpy(no.chaves[i], temp, t->tam_chave);
+        }
+
+        printf("\nchave %i: %s\n", i, no.chaves[i]);
+    }
 }
+
 
 void btree_write(btree_node no, btree *t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
@@ -1417,7 +1440,6 @@ void btree_node_free(btree_node no) {
     free(no.chaves);
     free(no.filhos);
 }
-
 
 char* strpadright(char *str, char pad, unsigned size) {
     for (unsigned i = strlen(str); i < size; ++i)
