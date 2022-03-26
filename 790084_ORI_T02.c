@@ -1255,29 +1255,66 @@ bool inverted_list_binary_search(int* result, bool exibir_caminho, char *chave, 
 /* Funções de manipulação de Árvores-B */
 void btree_insert(char *chave, btree *t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
+    //arvore vazia
     if(t->qtd_nos == 0) {
         t->rrn_raiz = 0;
         t->qtd_nos = 1;
-
+        
         btree_node no =  btree_node_malloc(t);
-
         no.this_rrn = 0;
         no.folha = true;
-        strcpy(no.chaves[0], chave);
         no.qtd_chaves = 1;
+        
+        strcpy(no.chaves[0], chave);
+        
         btree_write(no, t);
         btree_node_free(no);
-
+        return;
     }
-    else{
-        btree_read(0, t);
+    
+    //arvore não vazia
+    promovido_aux a =  btree_insert_aux(chave, t->rrn_raiz, t);
+    if(strlen(a.chave_promovida) == 0 && a.filho_direito == -1) {
+        return;
     }
-//    printf(ERRO_NAO_IMPLEMENTADO, "btree_insert");
+    
+    
 }
 
 promovido_aux btree_insert_aux(char *chave, int rrn, btree *t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "btree_insert_aux");
+   btree_node no = btree_read(rrn, t);
+   //no folha
+   if(no.folha){
+       //no folha com espaço
+       if(no.qtd_chaves < btree_order-1){
+           int i = no.qtd_chaves - 1;
+           while(i>=1 && t->compar(chave, no.chaves[i])>0) {
+               char vouCopiar[t->tam_chave + 1];
+               strcpy(vouCopiar, no.chaves[i]);
+               strcpy(no.chaves[i+1], no.chaves[i]);
+               i--;
+           }
+           strcpy(no.chaves[i+1], chave);
+           no.qtd_chaves++;
+
+           btree_write(no, t);
+           btree_node_free(no);
+
+           promovido_aux a;
+           a.chave_promovida[0] = '\0';
+           a.filho_direito = -1;
+           return a;
+       }
+
+       //folha sem espaço
+
+   }
+
+    promovido_aux a;
+    a.chave_promovida[0] = '\0';
+    a.filho_direito = -1;
+    return a;
 }
 
 promovido_aux btree_divide(char *chave, int filho_direito, int rrn, btree *t) {
@@ -1343,20 +1380,24 @@ btree_node btree_read(int rrn, btree *t) {
     btree_node no = btree_node_malloc(t);
     char temp[btree_register_size(t) + 1], aux[btree_register_size(t)], *p;
     p = temp;
+
     //copiamos do arquivo para a String temporaria
     strncpy(temp, t->arquivo + (rrn * btree_register_size(t)), btree_register_size(t));
     temp[btree_register_size(t)] = '\0';
+
     strncpy(aux, p, 3);
     aux[4] = '\0';
+
     no.qtd_chaves = atoi(aux);
     p += 3;
+
     //chaves
     for (int i = 0; i < btree_order-1; ++i) {
-        if(p[0] == '#') {
-            no.chaves[i][0] = '\0';
-        }
-        else {
-            strncpy(no.chaves[i], p, t->tam_chave);
+        if(p[0] != '#') {
+            char chaveTemp[t->tam_chave + 1];
+            strncpy(chaveTemp, p, t->tam_chave);
+            chaveTemp[t->tam_chave] = '\0';
+            strcpy(no.chaves[i], chaveTemp);
         }
         p += t->tam_chave;
     }
@@ -1368,20 +1409,17 @@ btree_node btree_read(int rrn, btree *t) {
     else {
         no.folha = true;
     }
-
+    p += 1;
     //filhos
     for (int i = 0; i < btree_order; ++i) {
-        if(p[0] == '*') {
-            no.filhos[i] = -1;
-        }
-        else {
+        if(p[0] != '*') {
             strncpy(aux, p, 3);
             no.filhos[i] = atoi(aux);
         }
         p += 3;
     }
     no.this_rrn = rrn;
-
+    return no;
 }
 
 
