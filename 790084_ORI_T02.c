@@ -1257,6 +1257,12 @@ bool inverted_list_binary_search(int* result, bool exibir_caminho, char *chave, 
 /* Funções de manipulação de Árvores-B */
 void btree_insert(char *chave, btree *t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
+
+    bool chave_encontrada =  btree_search(NULL, false, chave, t->rrn_raiz, t);
+    if(chave_encontrada) {
+        printf("\n######### CHAVE ENCONTRADA ########\n");
+        return;
+    }
     //arvore vazia
     if(t->qtd_nos == 0) {
         t->rrn_raiz = 0;
@@ -1425,49 +1431,36 @@ promovido_aux btree_divide(char *chave, int filho_direito, int rrn, btree *t) {
 
 bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree *t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-//    if(t->qtd_nos == 0) {
-//        return false;
-//    }
-//    btree_binary_search()
+    if(t->qtd_nos == 0) {
+        return false;
+    }
+    btree_node node = btree_read(rrn, t);
+    bool chave_encontrada =  btree_binary_search(result, exibir_caminho, chave, &node, t);
+    btree_node_free(node);
+    return chave_encontrada;
+
 }
 
 bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_node* node, btree* t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "btree_binary_search");
-//
-//    const void *base =  node->chaves;
-//    int lim, cmp;
-//    const void *p;
-////    if(exibir_caminho) {
-////        printf(REGS_PERCORRIDOS);
-////    }
-//
-//    for (lim = (int)node->qtd_chaves; lim != 0 ; lim = lim/2) { //move o cabeçote para a direta, dividindo por 2 >>= 1
-//        p = base + (lim / 2) * t->tam_chave; //meio do vetor
-//        *result = (p - base)/t->tam_chave;
-////        if(exibir_caminho) {
-////            printf(" %d",rrn); //como que eu vou imprimir o rrn se o tipo de dado é abstrato
-////        }
-//
-//        cmp = (t->compar)(chave, p);
-//        //valor procurado
-//        if(cmp == 0) {
-//            if(exibir_caminho) {
-//                printf("\n");
-//            }
-//            return true;
-//        }
-//        if(cmp > 0) {//move para a direita - valor menor
-//            base = p + t->tam_chave;
-//            lim--;
-//        }
-//        //move pra esquerda
-//    }
-////    if(exibir_caminho) {
-////        printf("\n");
-////    }
-//    return false;
+    int i = 0;
+    while(i < node->qtd_chaves && t->compar(chave, node->chaves[i]) > 0) {
+        i++;
+    }
 
+    if(i < node->qtd_chaves && t->compar(chave, node->chaves[i]) == 0) {
+        strcpy(node->chaves[i], result);
+        return true;
+    }
+
+    if(node->folha == true) {
+        return false;
+    }
+    btree_node new_node = btree_read(node->filhos[i], t);
+    btree_node_free(*node);
+    return btree_binary_search(result, exibir_caminho, chave, &new_node, t);
+//    btree_node_free(new_node);
+//    return resultado;
 }
 
 bool btree_print_in_order(char *chave_inicio, char *chave_fim, bool (*exibir)(char *chave), int rrn, btree *t) {
