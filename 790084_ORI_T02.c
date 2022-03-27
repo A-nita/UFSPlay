@@ -1286,6 +1286,8 @@ void btree_insert(char *chave, btree *t) {
         no.filhos[0] = t->rrn_raiz;
         no.filhos[1] = a.filho_direito;
         t->rrn_raiz = no.this_rrn;
+        btree_write(no, t);
+        btree_node_free(no);
     }
 }
 
