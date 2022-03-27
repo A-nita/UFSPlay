@@ -714,6 +714,8 @@ int qsort_string_categoria(const void *a, const void *b) {
     return strcmp((char *) a, (char *) b);
 }
 
+void add_usuario_idx();
+
 /* ==========================================================================
  * ============================ FUNÇÃO PRINCIPAL ============================
  * =============================== NÃO ALTERAR ============================== */
@@ -1046,8 +1048,8 @@ void cadastrar_usuario_menu(char *id_user, char *username, char *email) {
 
     //adcionamos o usuário no registro, e adcionamo-os no índice
     escrever_registro_usuario(u, qtd_registros_usuarios++);
-    //novo_usuarios_idx();
-    criar_usuarios_idx();
+    add_usuario_idx();
+//    criar_usuarios_idx();
 
     printf(SUCESSO);
 }
@@ -1274,11 +1276,17 @@ void btree_insert(char *chave, btree *t) {
     
     //arvore não vazia
     promovido_aux a =  btree_insert_aux(chave, t->rrn_raiz, t);
-    if(strlen(a.chave_promovida) == 0 && a.filho_direito == -1) {
-        return;
+    if(strlen(a.chave_promovida) != 0) {
+        t->qtd_nos++;
+        btree_node no = btree_node_malloc(t);
+        no.folha = false;
+        no.this_rrn = t->qtd_nos-1;
+        no.qtd_chaves = 1;
+        strcpy(no.chaves[0], a.chave_promovida);
+        no.filhos[0] = t->rrn_raiz;
+        no.filhos[1] = a.filho_direito;
+        t->rrn_raiz = no.this_rrn;
     }
-    
-    
 }
 
 promovido_aux btree_insert_aux(char *chave, int rrn, btree *t) {
@@ -1289,7 +1297,7 @@ promovido_aux btree_insert_aux(char *chave, int rrn, btree *t) {
        //no folha com espaço
        if(no.qtd_chaves < btree_order-1){
            int i = no.qtd_chaves - 1;
-           while(i>=1 && t->compar(chave, no.chaves[i])>0) {
+           while(i>=0 && t->compar(chave, no.chaves[i])<0) {
                char vouCopiar[t->tam_chave + 1];
                strcpy(vouCopiar, no.chaves[i]);
                strcpy(no.chaves[i+1], no.chaves[i]);
@@ -1310,11 +1318,44 @@ promovido_aux btree_insert_aux(char *chave, int rrn, btree *t) {
        //folha sem espaço
        return btree_divide(chave, -1, rrn, t);
    }
+   //nó não folha
+   int i = no.qtd_chaves-1;
 
-    promovido_aux a;
-    a.chave_promovida[0] = '\0';
-    a.filho_direito = -1;
-    return a;
+   while(i>=0 && t->compar(chave, no.chaves[i]) < 0) {
+       i--;
+   }
+   i++;
+   promovido_aux a = btree_insert_aux(chave, no.filhos[i], t);
+
+   if(strlen(a.chave_promovida) != 0) {
+       chave = a.chave_promovida;
+       if(no.qtd_chaves-1 < btree_order-1) {
+           i = no.qtd_chaves-1;
+           while(i>=0 && t->compar(chave, no.chaves[i]) < 0) {
+               //ponto de atenção nesse i+1 -> sigfault
+               strcpy(no.chaves[i+1], no.chaves[i]);
+               //ponto de atenção qui tbm nesse +2
+               no.filhos[i+2] = no.filhos[i+1];
+               i--;
+           }
+           //cuidado com o sig dnovo
+           strcpy(no.chaves[i+1], chave);
+           no.filhos[i+2] = a.filho_direito;
+           no.qtd_chaves++; //-> não entendi direito essa parte
+
+           a.chave_promovida[0] = '\0';
+           a.filho_direito = -1;
+           return a;
+       }
+       else {
+           return btree_divide(chave, a.filho_direito, no.this_rrn, t);
+       }
+   }
+   else {
+       a.chave_promovida[0] = '\0';
+       a.filho_direito = -1;
+       return a;
+   }
 }
 
 promovido_aux btree_divide(char *chave, int filho_direito, int rrn, btree *t) {
@@ -1331,17 +1372,15 @@ promovido_aux btree_divide(char *chave, int filho_direito, int rrn, btree *t) {
 
     //percorremos o nó Y
     for (int j = no_y.qtd_chaves-1; j >= 0 ; --j)
-    {   //chave não alocada e maioe do que X[i]
-        if(!chave_alocada && t->compar(chave, no_x.chaves[i]) > 0)
-        {
+    {   //chave não alocada e maior do que X[i]
+        if(!chave_alocada && t->compar(chave, no_x.chaves[i]) < 0) {
             //copiamos a chave para Y[j]
             strcpy(no_y.chaves[j], chave);
             //alocamos o filho direito
             no_y.filhos[j+1] = filho_direito;
             chave_alocada = true;
         }
-        else
-        {
+        else  {
             //copiamos de X[i] para Y[j]
             strcpy(no_y.chaves[j], no_x.chaves[i]);
             no_y.filhos[j+1] =  no_x.filhos[i+1];
@@ -1563,4 +1602,13 @@ char* strpadright(char *str, char pad, unsigned size) {
         str[i] = pad;
     str[size] = '\0';
     return str;
+}
+
+void add_usuario_idx() {
+    char usuario_str[TAM_CHAVE_USUARIOS_IDX + 1];
+
+    Usuario u = recuperar_registro_usuario(qtd_registros_usuarios-1);
+
+    sprintf(usuario_str, "%s%04d", u.id_user, qtd_registros_usuarios-1);
+    btree_insert(usuario_str, &usuarios_idx);
 }
