@@ -1373,7 +1373,7 @@ promovido_aux btree_divide(char *chave, int filho_direito, int rrn, btree *t) {
     //percorremos o nó Y
     for (int j = no_y.qtd_chaves-1; j >= 0 ; --j)
     {   //chave não alocada e maior do que X[i]
-        if(!chave_alocada && t->compar(chave, no_x.chaves[i]) < 0) {
+        if(!chave_alocada && t->compar(chave, no_x.chaves[i]) > 0) {
             //copiamos a chave para Y[j]
             strcpy(no_y.chaves[j], chave);
             //alocamos o filho direito
@@ -1391,8 +1391,8 @@ promovido_aux btree_divide(char *chave, int filho_direito, int rrn, btree *t) {
     if(!chave_alocada)
     {
         //enquanto não for percorrido t odo o nó X e a chave for maior
-        while(i>=0 && t->compar(chave, no_x.chaves[i]))
-        {   //copiamos de X[i+1] para X[i] -> movemos as chaves para a direita
+        while(i>=0 && t->compar(chave, no_x.chaves[i]) < 0) {
+            //copiamos de X[i+1] para X[i] -> movemos as chaves para a direita
             strcpy(no_x.chaves[i+1], no_x.chaves[i]);
             //movemos os fihos para a direita
             no_x.filhos[i+2] = no_x.filhos[i+1];
@@ -1403,10 +1403,15 @@ promovido_aux btree_divide(char *chave, int filho_direito, int rrn, btree *t) {
         no_x.filhos[i+2] = filho_direito;
     }
     promovido_aux a;
-    //todo
+    //TODO
     //caso especifico para ordem 3 trocar depois
-    strcpy(a.chave_promovida, no_x.chaves[((btree_order)/2)]);
+
+    strcpy(a.chave_promovida, no_x.chaves[(btree_order/2)]);
+    a.filho_direito = no_y.this_rrn;
+
+    no_x.chaves[(btree_order/2)][0] = '\0';
     no_y.filhos[0] = no_x.filhos[(btree_order/2)+1];
+    no_x.filhos[(btree_order/2)+1] = -1;
     no_x.qtd_chaves = btree_order/2;
 
     btree_write(no_y, t);
