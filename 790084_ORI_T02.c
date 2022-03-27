@@ -1308,7 +1308,7 @@ promovido_aux btree_insert_aux(char *chave, int rrn, btree *t) {
        }
 
        //folha sem espaço
-
+       return btree_divide(chave, -1, rrn, t);
    }
 
     promovido_aux a;
@@ -1319,9 +1319,64 @@ promovido_aux btree_insert_aux(char *chave, int rrn, btree *t) {
 
 promovido_aux btree_divide(char *chave, int filho_direito, int rrn, btree *t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "btree_divide");
+    btree_node no_x = btree_read(rrn, t);
+    btree_node no_y = btree_node_malloc(t);
+    t->qtd_nos++;
+    no_y.folha = true;
+    no_y.this_rrn = t->qtd_nos-1;
+    no_y.qtd_chaves = (btree_order-1)/2;
+
+    int i = no_x.qtd_chaves - 1;
+    bool chave_alocada = false;
+
+    //percorremos o nó Y
+    for (int j = no_y.qtd_chaves-1; j >= 0 ; --j)
+    {   //chave não alocada e maioe do que X[i]
+        if(!chave_alocada && t->compar(chave, no_x.chaves[i]) > 0)
+        {
+            //copiamos a chave para Y[j]
+            strcpy(no_y.chaves[j], chave);
+            //alocamos o filho direito
+            no_y.filhos[j+1] = filho_direito;
+            chave_alocada = true;
+        }
+        else
+        {
+            //copiamos de X[i] para Y[j]
+            strcpy(no_y.chaves[j], no_x.chaves[i]);
+            no_y.filhos[j+1] =  no_x.filhos[i+1];
+            i--;
+        }
+    }
+    //chave ainda não alocada
+    if(!chave_alocada)
+    {
+        //enquanto não for percorrido t odo o nó X e a chave for maior
+        while(i>=0 && t->compar(chave, no_x.chaves[i]))
+        {   //copiamos de X[i+1] para X[i] -> movemos as chaves para a direita
+            strcpy(no_x.chaves[i+1], no_x.chaves[i]);
+            //movemos os fihos para a direita
+            no_x.filhos[i+2] = no_x.filhos[i+1];
+            i--;
+        }
+        //salvamos a chave e o filho
+        strcpy(no_x.chaves[i+1], chave);
+        no_x.filhos[i+2] = filho_direito;
+    }
+    promovido_aux a;
+    //todo
+    //caso especifico para ordem 3 trocar depois
+    strcpy(a.chave_promovida, no_x.chaves[((btree_order)/2)]);
+    no_y.filhos[0] = no_x.filhos[(btree_order/2)+1];
+    no_x.qtd_chaves = btree_order/2;
+
+    btree_write(no_y, t);
+    btree_write(no_x, t);
+    btree_node_free(no_y);
+    btree_node_free(no_x);
+    return a;
 }
-//todo
+
 bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree *t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
 //    if(t->qtd_nos == 0) {
