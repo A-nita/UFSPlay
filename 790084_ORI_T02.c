@@ -1031,12 +1031,10 @@ void escrever_registro_compra(Compra c, int rrn) {
 //todo
 /* Funções principais */
 void cadastrar_usuario_menu(char *id_user, char *username, char *email) {
-    /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    //Busca-se o id_user. para verificar se este usuário já está cadastraso
-//    if(busca_binaria(id_user, usuarios_idx, qtd_registros_usuarios, sizeof(*usuarios_idx), qsort_usuarios_idx, false)) {
-//        printf(ERRO_PK_REPETIDA, id_user);
-//        return;
-//    }
+   if(btree_search(NULL, false, id_user, usuarios_idx.rrn_raiz, &usuarios_idx )){
+       printf(ERRO_PK_REPETIDA, id_user);
+       return;
+   }
 
     //criamos o usuário
     Usuario u;
@@ -1260,7 +1258,6 @@ void btree_insert(char *chave, btree *t) {
 
     bool chave_encontrada =  btree_search(NULL, false, chave, t->rrn_raiz, t);
     if(chave_encontrada) {
-        printf("\n######### CHAVE ENCONTRADA ########\n");
         return;
     }
     //arvore vazia
@@ -1435,7 +1432,8 @@ bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree
         return false;
     }
     btree_node node = btree_read(rrn, t);
-    bool chave_encontrada =  btree_binary_search(result, exibir_caminho, chave, &node, t);
+    int resultado;
+    bool chave_encontrada =  btree_binary_search(&resultado, exibir_caminho, chave, &node, t);
     btree_node_free(node);
     return chave_encontrada;
 
@@ -1449,7 +1447,7 @@ bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_no
     }
 
     if(i < node->qtd_chaves && t->compar(chave, node->chaves[i]) == 0) {
-        strcpy(node->chaves[i], result);
+        *result = i;
         return true;
     }
 
@@ -1457,10 +1455,9 @@ bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_no
         return false;
     }
     btree_node new_node = btree_read(node->filhos[i], t);
-    btree_node_free(*node);
-    return btree_binary_search(result, exibir_caminho, chave, &new_node, t);
-//    btree_node_free(new_node);
-//    return resultado;
+    bool resultado =  btree_binary_search(result, exibir_caminho, chave, &new_node, t);
+    btree_node_free(new_node);
+    return resultado;
 }
 
 bool btree_print_in_order(char *chave_inicio, char *chave_fim, bool (*exibir)(char *chave), int rrn, btree *t) {
