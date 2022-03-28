@@ -1065,23 +1065,23 @@ void cadastrar_jogo_menu(char *titulo, char *desenvolvedor, char *editora, char*
 void adicionar_saldo_menu(char *id_user, double valor) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     //Verificamos se o valor é negativo
-    if(valor <= 0) {
-        printf(ERRO_VALOR_INVALIDO);
-        return;
-    }
-    char resultado_busca[usuarios_idx.tam_chave+1];
-    bool chave_encontrada = btree_search(resultado_busca, false, id_user, usuarios_idx.rrn_raiz, &usuarios_idx);
-    if(!chave_encontrada){
-        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
-        return;
-    }
-
-//    int rrn = resultado_busca()
-    //recuperamos o registro de usuário, alteramos seu saldo, e salvamos
-//    Usuario u = recuperar_registro_usuario(resultadoBusca->rrn);
-//    u.saldo += valor;
-//    escrever_registro_usuario(u, resultadoBusca->rrn);
-//    printf(SUCESSO);
+//    if(valor <= 0) {
+//        printf(ERRO_VALOR_INVALIDO);
+//        return;
+//    }
+//    char resultado_busca[usuarios_idx.tam_chave+1];
+//    bool chave_encontrada = btree_search(resultado_busca, false, id_user, usuarios_idx.rrn_raiz, &usuarios_idx);
+//    if(!chave_encontrada){
+//        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+//        return;
+//    }
+//
+////    int rrn = resultado_busca()
+//    //recuperamos o registro de usuário, alteramos seu saldo, e salvamos
+////    Usuario u = recuperar_registro_usuario(resultadoBusca->rrn);
+////    u.saldo += valor;
+////    escrever_registro_usuario(u, resultadoBusca->rrn);
+////    printf(SUCESSO);
 
 }
 
@@ -1453,7 +1453,9 @@ bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree
     int resultado;
     bool chave_encontrada =  btree_binary_search(&resultado, exibir_caminho, chave, &node, t);
     if(chave_encontrada) {
-        strcpy(result, node.chaves[resultado]);
+        if(result) {
+            strcpy(result, node.chaves[resultado]);
+        }
         btree_node_free(node);
         return true;
     }
@@ -1464,6 +1466,10 @@ bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree
         if(folha) {
             return false;
         }
+        if(rrn == -1){
+            printf("\nERRO");
+            return false;
+        }
         return btree_search(result, exibir_caminho,chave, rrn, t);
     }
 
@@ -1471,39 +1477,47 @@ bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree
 
 bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_node* node, btree* t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    const void *base =  node->chaves;
+    char **base =  node->chaves;
     int lim;
     const void *p;
 //    if(exibir_caminho) {
 //        printf(REGS_PERCORRIDOS);
 //    }
 
-    for (lim = node->qtd_chaves; lim > 0 ; lim = lim/2) { //move o cabeçote para a direta, dividindo por 2 >>= 1
-        p = base + (lim / 2) * t->tam_chave; //meio do vetor
-        *result = (p - base)/t->tam_chave;
+    for (lim = node->qtd_chaves; lim > 0 ; lim = lim/2) {
+//        int index = lim / 2;
+        char* chave_atual;
+        chave_atual = base[lim/2];
+
+//        p = base + (lim / 2) * t->tam_chave; //meio do vetor
 //        if(exibir_caminho) {
 //            printf(" %d",rrn); //como que eu vou imprimir o rrn se o tipo de dado é abstrato
 //        }
-
+        char* p_str = p;
+        int comp = t->compar(chave, chave_atual);
 
         //valor procurado
-        if(t->compar(chave,p) == 0) {
+        if(comp == 0) {
             if(exibir_caminho) {
                 printf("\n");
             }
             return true;
         }
-        if(t->compar(chave,p) > 0) {//move para a direita - valor menor
-            base = p + t->tam_chave;
+
+        if(comp > 0) {//move para a direita - valor menor
+            base = base + ((lim/2) + 1) * sizeof(char*);
             *result =  lim;
             lim--;
+        }
+        else {
+            *result =  lim-1;
         }
         //move pra esquerda
     }
 //    if(exibir_caminho) {
 //        printf("\n");
 //    }
-    *result =  lim-1;
+
     return false;
 }
 
