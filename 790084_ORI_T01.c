@@ -1629,8 +1629,6 @@ void* busca_binaria(const void *key, const void *base0, size_t nmemb, size_t siz
     return NULL;
 }
 
-//verificando o git
-
 void* busca_binaria_piso(const void* key, void* base, size_t num, size_t size, int (*compar)(const void*,const void*)) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     int lim, cmp;
