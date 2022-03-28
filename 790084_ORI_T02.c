@@ -764,11 +764,11 @@ int main() {
     set_time(time);
     //todo
     criar_usuarios_idx();
-    criar_jogos_idx();
-    criar_compras_idx();
-    criar_titulo_idx();
-    criar_data_user_game_idx();
-    criar_categorias_idx();
+//    criar_jogos_idx();
+//    criar_compras_idx();
+//    criar_titulo_idx();
+//    criar_data_user_game_idx();
+//    criar_categorias_idx();
 
     while (1) {
         fgets(input, 500, stdin);
@@ -1065,23 +1065,24 @@ void cadastrar_jogo_menu(char *titulo, char *desenvolvedor, char *editora, char*
 void adicionar_saldo_menu(char *id_user, double valor) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     //Verificamos se o valor é negativo
-//    if(valor <= 0) {
-//        printf(ERRO_VALOR_INVALIDO);
-//        return;
-//    }
-//    char resultado_busca[usuarios_idx.tam_chave+1];
-//    bool chave_encontrada = btree_search(resultado_busca, false, id_user, usuarios_idx.rrn_raiz, &usuarios_idx);
-//    if(!chave_encontrada){
-//        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
-//        return;
-//    }
-//
-////    int rrn = resultado_busca()
-//    //recuperamos o registro de usuário, alteramos seu saldo, e salvamos
-////    Usuario u = recuperar_registro_usuario(resultadoBusca->rrn);
-////    u.saldo += valor;
-////    escrever_registro_usuario(u, resultadoBusca->rrn);
-////    printf(SUCESSO);
+    if(valor <= 0) {
+        printf(ERRO_VALOR_INVALIDO);
+        return;
+    }
+    char resultado_busca[usuarios_idx.tam_chave+1];
+    resultado_busca[0] = '\0';
+    bool chave_encontrada = btree_search(resultado_busca, false, id_user, usuarios_idx.rrn_raiz, &usuarios_idx);
+    if(!chave_encontrada){
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+        return;
+    }
+    char* str_rrn = resultado_busca+ TAM_ID_USER;
+    int rrn = atoi(str_rrn);
+//    recuperamos o registro de usuário, alteramos seu saldo, e salvamos
+    Usuario u = recuperar_registro_usuario(rrn);
+    u.saldo += valor;
+    escrever_registro_usuario(u, rrn);
+    printf(SUCESSO);
 
 }
 
@@ -1450,9 +1451,12 @@ bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree
         return false;
     }
     btree_node node = btree_read(rrn, t);
-    int resultado;
+    int resultado = 0;
     bool chave_encontrada =  btree_binary_search(&resultado, exibir_caminho, chave, &node, t);
     if(chave_encontrada) {
+//        for (int i = 0; i < btree_order; ++i) {
+//            printf(node.chaves[i]);
+//        }
         if(result) {
             strcpy(result, node.chaves[resultado]);
         }
@@ -1466,10 +1470,7 @@ bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree
         if(folha) {
             return false;
         }
-        if(rrn == -1){
-            printf("\nERRO");
-            return false;
-        }
+
         return btree_search(result, exibir_caminho,chave, rrn, t);
     }
 
@@ -1479,7 +1480,6 @@ bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_no
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     char **base =  node->chaves;
     int lim;
-    const void *p;
 //    if(exibir_caminho) {
 //        printf(REGS_PERCORRIDOS);
 //    }
@@ -1493,7 +1493,7 @@ bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_no
 //        if(exibir_caminho) {
 //            printf(" %d",rrn); //como que eu vou imprimir o rrn se o tipo de dado é abstrato
 //        }
-        char* p_str = p;
+
         int comp = t->compar(chave, chave_atual);
 
         //valor procurado
@@ -1501,6 +1501,7 @@ bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_no
             if(exibir_caminho) {
                 printf("\n");
             }
+            *result = lim-1;
             return true;
         }
 
@@ -1526,7 +1527,7 @@ bool btree_print_in_order(char *chave_inicio, char *chave_fim, bool (*exibir)(ch
     printf(ERRO_NAO_IMPLEMENTADO, "btree_print_in_order");
     return false;
 }
-//todo
+
 btree_node btree_read(int rrn, btree *t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     btree_node no = btree_node_malloc(t);
