@@ -1155,8 +1155,12 @@ void cadastrar_celular_menu(char* id_user, char* celular) {
 
 void cadastrar_jogo_menu(char *titulo, char *desenvolvedor, char *editora, char* lancamento, double preco) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    if(btree_search(NULL, false, titulo, titulo_idx.rrn_raiz, &titulo_idx )){
-//        printf(ERRO_PK_REPETIDA, id_user);
+    char str_titulo[TAM_MAX_TITULO];
+    str_titulo[0] = '\0';
+    strcat(str_titulo, titulo);
+    strpadright(str_titulo, '#',TAM_MAX_TITULO-1);
+    if(btree_search(NULL, false, str_titulo, titulo_idx.rrn_raiz, &titulo_idx )){
+        printf(ERRO_PK_REPETIDA, titulo);
         return;
     }
     Jogo j;
@@ -1341,12 +1345,7 @@ int order_compras_idx(const void *key, const void *elem) {
 /* Função de comparação entre chaves do índice titulo_idx */
 int order_titulo_idx(const void *key, const void *elem) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    for (int i = 0; i < TAM_CHAVE_TITULO_IDX; ++i) {
-        if(strncmp(key, elem, TAM_CHAVE_TITULO_IDX- 1 - i) >= 0) {
-            return strncmp(key, elem, TAM_CHAVE_TITULO_IDX- 1 - i);
-        }
-    }
-    return -1;
+    return strncmp(key, elem, TAM_MAX_TITULO - 1);
 }
 
 /* Função de comparação entre chaves do índice data_user_game_idx */
