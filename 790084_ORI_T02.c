@@ -1054,7 +1054,23 @@ void cadastrar_usuario_menu(char *id_user, char *username, char *email) {
 
 void cadastrar_celular_menu(char* id_user, char* celular) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "cadastrar_celular_menu");
+    //verificamos se o usuário existe
+    char resultado_busca[usuarios_idx.tam_chave+1];
+    resultado_busca[0] = '\0';
+    bool chave_encontrada = btree_search(resultado_busca, false, id_user, usuarios_idx.rrn_raiz, &usuarios_idx);
+    if(!chave_encontrada){
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+        return;
+    }
+    char* str_rrn = resultado_busca+ TAM_ID_USER;
+    int rrn = atoi(str_rrn);
+//    recuperamos o registro de usuário, alteramos seu saldo, e salvamos
+    Usuario u = recuperar_registro_usuario(rrn);
+    strcpy(u.celular, celular);
+    escrever_registro_usuario(u, rrn);
+    printf(SUCESSO);
+
+    printf(ERRO_REGISTRO_NAO_ENCONTRADO);
 }
 
 void cadastrar_jogo_menu(char *titulo, char *desenvolvedor, char *editora, char* lancamento, double preco) {
@@ -1275,10 +1291,6 @@ bool inverted_list_binary_search(int* result, bool exibir_caminho, char *chave, 
 void btree_insert(char *chave, btree *t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
 
-    bool chave_encontrada =  btree_search(NULL, false, chave, t->rrn_raiz, t);
-    if(chave_encontrada) {
-        return;
-    }
     //arvore vazia
     if(t->qtd_nos == 0) {
         t->rrn_raiz = 0;
@@ -1299,6 +1311,7 @@ void btree_insert(char *chave, btree *t) {
     //arvore não vazia
     promovido_aux a =  btree_insert_aux(chave, t->rrn_raiz, t);
     if(strlen(a.chave_promovida) != 0) {
+        //TODO ->dar uma verificada quanto a ter um no cheio
         t->qtd_nos++;
         btree_node no = btree_node_malloc(t);
         no.folha = false;
@@ -1407,6 +1420,10 @@ promovido_aux btree_divide(char *chave, int filho_direito, int rrn, btree *t) {
         else  {
             //copiamos de X[i] para Y[j]
             strcpy(no_y.chaves[j], no_x.chaves[i]);
+            //TODO
+            strcpy(no_x.chaves[i], "");
+
+//            no_x.chaves[i][0] = '\0';
             no_y.filhos[j+1] =  no_x.filhos[i+1];
             i--;
         }
