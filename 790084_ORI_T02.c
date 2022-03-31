@@ -1195,7 +1195,7 @@ void adicionar_saldo_menu(char *id_user, double valor) {
         printf(ERRO_REGISTRO_NAO_ENCONTRADO);
         return;
     }
-    char* str_rrn = resultado_busca+ TAM_ID_USER;
+    char* str_rrn = resultado_busca + TAM_ID_USER;
     int rrn = atoi(str_rrn);
 //    recuperamos o registro de usuário, alteramos seu saldo, e salvamos
     Usuario u = recuperar_registro_usuario(rrn);
@@ -1483,6 +1483,8 @@ promovido_aux btree_insert_aux(char *chave, int rrn, btree *t) {
 
            a.chave_promovida[0] = '\0';
            a.filho_direito = -1;
+           btree_write(no, t);
+           btree_node_free(no);
            return a;
        }
        else {
@@ -1574,6 +1576,7 @@ bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree
     //TODO o problema está aqui
     bool chave_encontrada =  btree_binary_search(&resultado, exibir_caminho, chave, &node, t);
 
+
     if(chave_encontrada) {
         if(result) {
             strcpy(result, node.chaves[resultado]);
@@ -1595,10 +1598,11 @@ bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree
 bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_node* node, btree* t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     int index = 0;
+    char* chave_atual;
 
     for (int lim = node->qtd_chaves; lim > 0 ; lim = lim/2) {
 
-        char* chave_atual;
+
         if(index + lim/2 >= node->qtd_chaves) {
             return false;
         }
