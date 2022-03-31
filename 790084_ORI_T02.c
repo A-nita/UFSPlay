@@ -945,8 +945,8 @@ bool exibir_btree_usuario(char *chave) {
 
 bool exibir_btree_jogo(char *chave) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "exibir_btree_jogo");
-    return false;
+    int rrn = atoi(chave + TAM_ID_GAME);
+    return exibir_jogo(rrn);
 }
 
 bool exibir_btree_compra(char *chave) {
@@ -1220,13 +1220,23 @@ void cadastrar_categoria_menu(char* titulo, char* categoria) {
 void buscar_usuario_id_user_menu(char *id_user) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     char resultado[TAM_CHAVE_USUARIOS_IDX+1];
-    btree_search(resultado, true, id_user, usuarios_idx.rrn_raiz, &usuarios_idx);
-    exibir_btree_usuario(resultado);
+    if (btree_search(resultado, true, id_user, usuarios_idx.rrn_raiz, &usuarios_idx)) {
+        exibir_btree_usuario(resultado);
+    }
+    else {
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+    }
 }
 
 void buscar_jogo_id_menu(char *id_game) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "buscar_jogo_id_menu");
+    char resultado[TAM_CHAVE_JOGOS_IDX];
+    if (btree_search(resultado, true, id_game, jogos_idx.rrn_raiz, &jogos_idx)) {
+        exibir_btree_jogo(resultado);
+    }
+    else {
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+    }
 }
 
 void buscar_jogo_titulo_menu(char *titulo) {
@@ -1568,8 +1578,13 @@ promovido_aux btree_divide(char *chave, int filho_direito, int rrn, btree *t) {
 }
 
 bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree *t) {
-
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
+    if(exibir_caminho){
+        if(rrn == t->rrn_raiz) {
+            printf(RRN_NOS);
+        }
+        printf(" %d (", rrn);
+    }
     if(t->qtd_nos == 0) {
         return false;
     }
@@ -1584,6 +1599,9 @@ bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree
             strcpy(result, node.chaves[resultado]);
         }
         btree_node_free(node);
+        if(exibir_caminho){
+            printf("\n");
+        }
         return true;
     }
     else {
@@ -1591,9 +1609,22 @@ bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree
         bool folha = node.folha;
         btree_node_free(node);
         if(folha) {
+            if(exibir_caminho){
+                printf("\n");
+            }
             return false;
         }
-        return btree_search(result, exibir_caminho,chave, rrn, t);
+
+        bool retorno = btree_search(result, exibir_caminho,chave, rrn, t);
+        if(exibir_caminho){
+            if(rrn == t->rrn_raiz) {
+                printf("\n", rrn);
+            }
+            else{
+                printf("");
+            }
+        }
+        return retorno;
     }
 }
 
@@ -1603,7 +1634,15 @@ bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_no
     char* chave_atual;
 
     for (int lim = node->qtd_chaves; lim > 0 ; lim = lim/2) {
+        if(exibir_caminho){
+            if(lim == node->qtd_chaves){
+                printf("%d", index + lim/2);
+            }
+            else{
+                printf(" %d", index + lim/2);
+            }
 
+        }
 
         if(index + lim/2 >= node->qtd_chaves) {
             return false;
@@ -1615,6 +1654,9 @@ bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_no
         //valor procurado
         if(comp == 0) {
             *result = lim-1;
+            if(exibir_caminho){
+                printf(")");
+            }
             return true;
         }
 
@@ -1628,7 +1670,9 @@ bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_no
         }
         //move pra esquerda
     }
-
+    if(exibir_caminho){
+        printf(")");
+    }
     return false;
 }
 
