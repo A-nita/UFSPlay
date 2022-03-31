@@ -1219,7 +1219,9 @@ void cadastrar_categoria_menu(char* titulo, char* categoria) {
 /* Busca */
 void buscar_usuario_id_user_menu(char *id_user) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "buscar_jogo_id_menu");
+    char resultado[TAM_CHAVE_USUARIOS_IDX+1];
+    btree_search(resultado, true, id_user, usuarios_idx.rrn_raiz, &usuarios_idx);
+    exibir_btree_usuario(resultado);
 }
 
 void buscar_jogo_id_menu(char *id_game) {
