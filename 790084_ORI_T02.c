@@ -766,9 +766,9 @@ int main() {
     set_time(time);
     //todo
     criar_usuarios_idx();
-//    criar_jogos_idx();
+    criar_jogos_idx();
 //    criar_compras_idx();
-//    criar_titulo_idx();
+    criar_titulo_idx();
 //    criar_data_user_game_idx();
 //    criar_categorias_idx();
 
@@ -1236,7 +1236,7 @@ void buscar_jogo_titulo_menu(char *titulo) {
 /* Listagem */
 void listar_usuarios_id_user_menu() {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "listar_usuarios_id_user_menu");
+    btree_print_in_order(NULL, NULL, &exibir_btree_usuario, usuarios_idx.rrn_raiz, &usuarios_idx);
 }
 
 void listar_jogos_categorias_menu(char *categoria) {
@@ -1632,8 +1632,18 @@ bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_no
 
 bool btree_print_in_order(char *chave_inicio, char *chave_fim, bool (*exibir)(char *chave), int rrn, btree *t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "btree_print_in_order");
-    return false;
+    btree_node no =  btree_read(rrn, t);
+    for (int i = 0; i <= no.qtd_chaves-1; ++i) {
+        if(no.filhos[i] != -1){
+            btree_print_in_order(chave_inicio, chave_fim, exibir, no.filhos[i], t);
+        }
+        if(chave_inicio == NULL || (t->compar(no.chaves[i], chave_inicio)>=0 && t->compar(no.chaves[i], chave_fim)<= 0)){
+            exibir(no.chaves[i]);
+        }
+    }
+    if(no.filhos[no.qtd_chaves] != -1){
+        btree_print_in_order(chave_inicio, chave_fim, exibir, no.filhos[no.qtd_chaves], t);
+    }
 }
 
 btree_node btree_read(int rrn, btree *t) {
