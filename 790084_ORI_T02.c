@@ -718,6 +718,7 @@ void add_usuario_idx();
 void add_id_jogo_idx();
 void add_compra_idx();
 void add_titulo_idx();
+void add_data_user_game_idx();
 
 /* ==========================================================================
  * ============================ FUNÇÃO PRINCIPAL ============================
@@ -901,7 +902,15 @@ void criar_titulo_idx() {
 /* Cria o índice secundário data_user_game_idx */
 void criar_data_user_game_idx() {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "criar_data_user_game_idx");
+//    char compra_str[TAM_CHAVE_DATA_USER_GAME_IDX + 1];
+//    for (int i = 0; i < qtd_registros_compras; ++i) {
+//        Compra c = recuperar_registro_compra(i);
+//
+//        sprintf(compra_str, "%s%s%s", c.data_compra, c.id_user_dono, c.id_game);
+//        btree_insert(compra_str, &data_user_game_idx);
+//    }
+
+
 }
 
 /* Cria os índices (secundário e primário) de categorias_idx */
@@ -1156,8 +1165,6 @@ void cadastrar_usuario_menu(char *id_user, char *username, char *email) {
     //adcionamos o usuário no registro, e adcionamo-os no índice
     escrever_registro_usuario(u, qtd_registros_usuarios++);
     add_usuario_idx();
-//    criar_usuarios_idx();
-
     printf(SUCESSO);
 }
 
@@ -1292,6 +1299,7 @@ void comprar_menu(char *id_user, char *titulo) {
     escrever_registro_compra(c, qtd_registros_compras++);
     //todo
     add_compra_idx();
+    add_data_user_game_idx();
     printf(SUCESSO);
 }
 
@@ -1326,13 +1334,13 @@ void buscar_jogo_id_menu(char *id_game) {
 
 void buscar_jogo_titulo_menu(char *titulo) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    char resultado[TAM_CHAVE_TITULO_IDX];
-    if (btree_search(resultado, true, titulo, titulo_idx.rrn_raiz, &titulo_idx)) {
-        exibir_btree_titulo(resultado);
-    }
-    else {
-        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
-    }
+//    char resultado[TAM_CHAVE_TITULO_IDX];
+//    if (btree_search(resultado, true, titulo, titulo_idx.rrn_raiz, &titulo_idx)) {
+//        exibir_btree_titulo(resultado);
+//    }
+//    else {
+//        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+//    }
 }
 
 
@@ -1349,7 +1357,7 @@ void listar_jogos_categorias_menu(char *categoria) {
 
 void listar_compras_periodo_menu(char *data_inicio, char *data_fim) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "listar_compras_periodo_menu");
+//    btree_print_in_order(data_inicio, data_fim, &exibir_btree_data_user_game, data_user_game_idx.rrn_raiz, &data_user_game_idx);
 }
 
 
@@ -1455,8 +1463,7 @@ int order_titulo_idx(const void *key, const void *elem) {
 /* Função de comparação entre chaves do índice data_user_game_idx */
 int order_data_user_game_idx(const void *key, const void *elem) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "order_data_user_game_idx");
-    return -1;
+    return strncmp(key, elem, TAM_CHAVE_DATA_USER_GAME_IDX);
 }
 
 /* Função de comparação entre chaves do índice secundário de categorias_idx */
@@ -1571,9 +1578,13 @@ promovido_aux btree_insert_aux(char *chave, int rrn, btree *t) {
 
    if(strlen(a.chave_promovida) != 0) {
        chave = a.chave_promovida;
-       if(no.qtd_chaves-1 < btree_order-1) {
+       if(no.qtd_chaves < btree_order-1) {
            i = no.qtd_chaves-1;
            while(i>=0 && t->compar(chave, no.chaves[i]) < 0) {
+               if(i == btree_order-2){
+                   i--;
+                   break;
+               }
                //ponto de atenção nesse i+1 -> sigfault
                strcpy(no.chaves[i+1], no.chaves[i]);
                //ponto de atenção qui tbm nesse +2
@@ -1607,7 +1618,6 @@ promovido_aux btree_divide(char *chave, int filho_direito, int rrn, btree *t) {
     btree_node no_x = btree_read(rrn, t);
     btree_node no_y = btree_node_malloc(t);
     t->qtd_nos++;
-    no_y.folha = true;
     no_y.this_rrn = t->qtd_nos-1;
     no_y.qtd_chaves = (btree_order-1)/2;
 
@@ -1656,7 +1666,7 @@ promovido_aux btree_divide(char *chave, int filho_direito, int rrn, btree *t) {
 
     strcpy(a.chave_promovida, no_x.chaves[(btree_order/2)]);
     a.filho_direito = no_y.this_rrn;
-
+    no_y.folha = no_x.folha;
     no_x.chaves[(btree_order/2)][0] = '\0';
     no_y.filhos[0] = no_x.filhos[(btree_order/2)+1];
     no_x.filhos[(btree_order/2)+1] = -1;
@@ -1961,4 +1971,13 @@ void add_titulo_idx() {
     sprintf(titulo_str, "%s%s", titulo_jogo, j.id_game);
     btree_insert(titulo_str, &titulo_idx);
 
+}
+
+void add_data_user_game_idx() {
+    char compra_str[TAM_CHAVE_DATA_USER_GAME_IDX + 1];
+
+    Compra c = recuperar_registro_compra(qtd_registros_compras-1);
+
+    sprintf(compra_str, "%s%s%s", c.data_compra, c.id_user_dono, c.id_game);
+    btree_insert(compra_str, &data_user_game_idx);
 }
