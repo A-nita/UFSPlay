@@ -967,8 +967,8 @@ bool exibir_btree_jogo(char *chave) {
 
 bool exibir_btree_compra(char *chave) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "exibir_btree_compra");
-    return false;
+    int rrn = atoi(chave + TAM_CHAVE_COMPRAS_IDX);
+    return exibir_compra(rrn);
 }
 
 bool exibir_btree_titulo(char *chave) {
@@ -978,8 +978,7 @@ bool exibir_btree_titulo(char *chave) {
 
 bool exibir_btree_data_user_game(char *chave) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "exibir_btree_data_user_game");
-    return false;
+    return exibir_btree_compra(chave);
 }
 
 /* Recupera do arquivo de usuários o registro com o RRN
@@ -1239,7 +1238,7 @@ void adicionar_saldo_menu(char *id_user, double valor) {
     printf(SUCESSO);
 
 }
-//TODO
+
 void comprar_menu(char *id_user, char *titulo) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     char resultado_user[TAM_CHAVE_USUARIOS_IDX+1];
@@ -1252,6 +1251,7 @@ void comprar_menu(char *id_user, char *titulo) {
     strcat(str_titulo, titulo);
     strpadright(str_titulo, '#',TAM_MAX_TITULO-1);
     char resultado_titulo[TAM_CHAVE_TITULO_IDX+1];
+
     if (!btree_search(resultado_titulo, false, str_titulo, titulo_idx.rrn_raiz, &titulo_idx)) {
         printf(ERRO_REGISTRO_NAO_ENCONTRADO);
         return;
@@ -1334,13 +1334,18 @@ void buscar_jogo_id_menu(char *id_game) {
 
 void buscar_jogo_titulo_menu(char *titulo) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-//    char resultado[TAM_CHAVE_TITULO_IDX];
-//    if (btree_search(resultado, true, titulo, titulo_idx.rrn_raiz, &titulo_idx)) {
-//        exibir_btree_titulo(resultado);
-//    }
-//    else {
-//        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
-//    }
+    char str_titulo[TAM_MAX_TITULO];
+    str_titulo[0] = '\0';
+    strcat(str_titulo, titulo);
+    strpadright(str_titulo, '#',TAM_MAX_TITULO-1);
+
+    char resultado[TAM_CHAVE_TITULO_IDX+1];
+    if (btree_search(resultado, true, str_titulo, titulo_idx.rrn_raiz, &titulo_idx)) {
+        buscar_jogo_id_menu(resultado+TAM_MAX_TITULO-1);
+    }
+    else {
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+    }
 }
 
 
