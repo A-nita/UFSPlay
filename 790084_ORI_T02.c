@@ -771,7 +771,7 @@ int main() {
     criar_jogos_idx();
     criar_compras_idx();
     criar_titulo_idx();
-//    criar_data_user_game_idx();
+    criar_data_user_game_idx();
 //    criar_categorias_idx();
 
     while (1) {
@@ -902,13 +902,13 @@ void criar_titulo_idx() {
 /* Cria o índice secundário data_user_game_idx */
 void criar_data_user_game_idx() {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-//    char compra_str[TAM_CHAVE_DATA_USER_GAME_IDX + 1];
-//    for (int i = 0; i < qtd_registros_compras; ++i) {
-//        Compra c = recuperar_registro_compra(i);
-//
-//        sprintf(compra_str, "%s%s%s", c.data_compra, c.id_user_dono, c.id_game);
-//        btree_insert(compra_str, &data_user_game_idx);
-//    }
+    char compra_str[TAM_CHAVE_DATA_USER_GAME_IDX + 1];
+    for (int i = 0; i < qtd_registros_compras; ++i) {
+        Compra c = recuperar_registro_compra(i);
+
+        sprintf(compra_str, "%s%s%s", c.data_compra, c.id_user_dono, c.id_game);
+        btree_insert(compra_str, &data_user_game_idx);
+    }
 
 
 }
