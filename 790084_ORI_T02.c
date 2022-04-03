@@ -967,7 +967,8 @@ bool exibir_btree_jogo(char *chave) {
 
 bool exibir_btree_compra(char *chave) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    int rrn = atoi(chave + TAM_CHAVE_COMPRAS_IDX);
+
+    int rrn = atoi(chave+TAM_CHAVE_COMPRAS_IDX-1);
     return exibir_compra(rrn);
 }
 
@@ -978,7 +979,15 @@ bool exibir_btree_titulo(char *chave) {
 
 bool exibir_btree_data_user_game(char *chave) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    return exibir_btree_compra(chave);
+    char data[TAM_CHAVE_COMPRAS_IDX+1];
+//    data = chave+TAM_DATE;
+    strcpy(data, chave+TAM_DATE-1);
+    char result[TAM_CHAVE_COMPRAS_IDX+1];
+    if(!btree_search(result, false, data, compras_idx.rrn_raiz, &compras_idx)){
+        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+    }
+    return exibir_btree_compra(result);
+
 }
 
 /* Recupera do arquivo de usuários o registro com o RRN
@@ -1362,7 +1371,11 @@ void listar_jogos_categorias_menu(char *categoria) {
 
 void listar_compras_periodo_menu(char *data_inicio, char *data_fim) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-//    btree_print_in_order(data_inicio, data_fim, &exibir_btree_data_user_game, data_user_game_idx.rrn_raiz, &data_user_game_idx);
+    if(!btree_print_in_order(data_inicio, data_fim, &exibir_btree_data_user_game, data_user_game_idx.rrn_raiz, &data_user_game_idx)){
+        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+    } else {
+        printf("\n");
+    }
 }
 
 
@@ -1468,7 +1481,7 @@ int order_titulo_idx(const void *key, const void *elem) {
 /* Função de comparação entre chaves do índice data_user_game_idx */
 int order_data_user_game_idx(const void *key, const void *elem) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    return strncmp(key, elem, TAM_CHAVE_DATA_USER_GAME_IDX);
+    return strncmp(key, elem, TAM_DATE-1);
 }
 
 /* Função de comparação entre chaves do índice secundário de categorias_idx */
@@ -1797,7 +1810,9 @@ bool btree_print_in_order(char *chave_inicio, char *chave_fim, bool (*exibir)(ch
         }
     }
     if(no.filhos[no.qtd_chaves] != -1){
-       return btree_print_in_order(chave_inicio, chave_fim, exibir, no.filhos[no.qtd_chaves], t);
+        if(btree_print_in_order(chave_inicio, chave_fim, exibir, no.filhos[no.qtd_chaves], t)){
+            n_impressoes++;
+        }
     }
     if(n_impressoes == 0){
         return false;
