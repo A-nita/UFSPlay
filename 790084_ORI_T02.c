@@ -716,6 +716,7 @@ int qsort_string_categoria(const void *a, const void *b) {
 
 void add_usuario_idx();
 void add_id_jogo_idx();
+void add_compra_idx();
 void add_titulo_idx();
 
 /* ==========================================================================
@@ -767,7 +768,7 @@ int main() {
     //todo
     criar_usuarios_idx();
     criar_jogos_idx();
-//    criar_compras_idx();
+    criar_compras_idx();
     criar_titulo_idx();
 //    criar_data_user_game_idx();
 //    criar_categorias_idx();
@@ -874,7 +875,13 @@ void criar_jogos_idx() {
 /* Cria o índice primário compras_idx */
 void criar_compras_idx() {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "criar_compras_idx");
+    char compra_str[TAM_CHAVE_COMPRAS_IDX + 1];
+
+    for (int i = 0; i < qtd_registros_compras; ++i) {
+        Compra c = recuperar_registro_compra(i);
+        sprintf(compra_str, "%s%s%04d",c.id_user_dono, c.id_game, i);
+        btree_insert(compra_str, &compras_idx);
+    }
 }
 
 /* Cria o índice secundário titulo_idx */
@@ -883,7 +890,7 @@ void criar_titulo_idx() {
     char titulo_str[TAM_CHAVE_TITULO_IDX + 1];
     char titulo_jogo[TAM_MAX_TITULO-1];
     for (unsigned i = 0; i < qtd_registros_jogos; ++i) {
-        Jogo j = recuperar_registro_jogo(qtd_registros_jogos-1);
+        Jogo j = recuperar_registro_jogo(i);
         strcpy(titulo_jogo, j.titulo);
         strpadright(titulo_jogo, '#', TAM_MAX_TITULO-1);
         sprintf(titulo_str, "%s%s", titulo_jogo, j.id_game);
@@ -957,8 +964,7 @@ bool exibir_btree_compra(char *chave) {
 
 bool exibir_btree_titulo(char *chave) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "exibir_btree_titulo");
-    return false;
+    return exibir_btree_jogo(chave + TAM_MAX_TITULO);
 }
 
 bool exibir_btree_data_user_game(char *chave) {
@@ -1034,7 +1040,21 @@ Jogo recuperar_registro_jogo(int rrn) {
  * informado e retorna os dados na struct Compra */
 Compra recuperar_registro_compra(int rrn) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "recuperar_registro_compra");
+    Compra c;
+    char temp[TAM_REGISTRO_COMPRA + 1];
+    //copiamos a compra do arquivo para a String temporaria
+    strncpy(temp, ARQUIVO_COMPRAS + (rrn * TAM_REGISTRO_COMPRA), TAM_REGISTRO_COMPRA);
+    temp[TAM_REGISTRO_COMPRA] = '\0';
+
+    //copiamos os dados da compra na Atring para a struct compra e a retornamos
+    strncpy(c.id_user_dono, temp,12);
+    c.id_user_dono[11] = '\0';
+    strncpy(c.data_compra, temp+11,8);
+    c.data_compra[8] = '\0';
+    strncpy(c.id_game, temp+12+7,8);
+    c.id_game[8] = '\0';
+
+    return c;
 }
 
 /* Escreve no arquivo de usuários na posição informada (RRN)
@@ -1106,7 +1126,15 @@ void escrever_registro_jogo(Jogo j, int rrn) {
  * os dados na struct Compra */
 void escrever_registro_compra(Compra c, int rrn) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "escrever_registro_compra");
+    //    copiamos os dados da struct comprar para uma String temporaria
+    char temp[TAM_REGISTRO_COMPRA + 1];
+    temp[0] = '\0';
+    strcpy(temp, c.id_user_dono);
+    strcat(temp, c.data_compra);
+    strcat(temp, c.id_game);
+    //escrevemos a compra no arquivo
+    strncpy(ARQUIVO_COMPRAS + rrn*TAM_REGISTRO_COMPRA, temp, TAM_REGISTRO_COMPRA);
+    ARQUIVO_COMPRAS[qtd_registros_compras*TAM_REGISTRO_COMPRA] = '\0';
 }
 
 //todo
@@ -1204,10 +1232,67 @@ void adicionar_saldo_menu(char *id_user, double valor) {
     printf(SUCESSO);
 
 }
-
+//TODO
 void comprar_menu(char *id_user, char *titulo) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "comprar_menu");
+    char resultado_user[TAM_CHAVE_USUARIOS_IDX+1];
+    if (!btree_search(resultado_user, false, id_user, usuarios_idx.rrn_raiz, &usuarios_idx)) {
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+        return;
+    }
+    char str_titulo[TAM_MAX_TITULO];
+    str_titulo[0] = '\0';
+    strcat(str_titulo, titulo);
+    strpadright(str_titulo, '#',TAM_MAX_TITULO-1);
+    char resultado_titulo[TAM_CHAVE_TITULO_IDX+1];
+    if (!btree_search(resultado_titulo, false, str_titulo, titulo_idx.rrn_raiz, &titulo_idx)) {
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+        return;
+    }
+    char id_game[TAM_CHAVE_JOGOS_IDX];
+    strcpy(id_game, resultado_titulo+TAM_MAX_TITULO);
+    char resultado_id_game[TAM_ID_GAME];
+    btree_search(resultado_id_game, false, id_game, jogos_idx.rrn_raiz, &jogos_idx);
+
+    //usuario ou jogo não existe
+    int rrn_jogo = atoi(resultado_id_game+TAM_ID_GAME);
+    Jogo j = recuperar_registro_jogo(rrn_jogo);
+    int rrn_user = atoi(resultado_user+TAM_ID_USER);
+    Usuario u = recuperar_registro_usuario(rrn_user);
+
+    //Verificamos se a compra já existe
+
+    char chave_compra[TAM_CHAVE_COMPRAS_IDX+1];
+    strcpy(chave_compra, u.id_user);
+    strcat(chave_compra, j.id_game);
+    if(btree_search(NULL, false, chave_compra, compras_idx.rrn_raiz, &compras_idx)){
+        printf(ERRO_PK_REPETIDA, chave_compra);
+        return;
+    }
+
+
+    if(u.saldo < j.preco) {
+        printf(ERRO_SALDO_NAO_SUFICIENTE);
+        return;
+    }
+    //subtraimos o valor do jogo do saldo do usuario
+    u.saldo -= j.preco;
+    //salvamos o novo saldo do usuario
+    escrever_registro_usuario(u, rrn_user);
+
+    //criamos a compra e a salvamos
+    Compra c;
+    strcpy(c.id_user_dono, u.id_user);
+    strcpy(c.id_game, j.id_game);
+    char data[TAM_DATE];
+    current_date(data);
+    strcpy(c.data_compra, data);
+
+    //salvamos a compra no arquivo e atualizamos os indices de compras
+    escrever_registro_compra(c, qtd_registros_compras++);
+    //todo
+    add_compra_idx();
+    printf(SUCESSO);
 }
 
 void cadastrar_categoria_menu(char* titulo, char* categoria) {
@@ -1241,7 +1326,13 @@ void buscar_jogo_id_menu(char *id_game) {
 
 void buscar_jogo_titulo_menu(char *titulo) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "buscar_jogo_titulo_menu");
+    char resultado[TAM_CHAVE_TITULO_IDX];
+    if (btree_search(resultado, true, titulo, titulo_idx.rrn_raiz, &titulo_idx)) {
+        exibir_btree_titulo(resultado);
+    }
+    else {
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+    }
 }
 
 
@@ -1350,8 +1441,9 @@ int order_jogos_idx(const void *key, const void *elem) {
 /* Função de comparação entre chaves do índice compras_idx */
 int order_compras_idx(const void *key, const void *elem) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
-    printf(ERRO_NAO_IMPLEMENTADO, "order_compras_idx");
-    return -1;
+
+    int tam_chave = TAM_ID_USER+TAM_ID_GAME;
+    return strncmp(key, elem, tam_chave-2);
 }
 
 /* Função de comparação entre chaves do índice titulo_idx */
@@ -1618,10 +1710,7 @@ bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree
         bool retorno = btree_search(result, exibir_caminho,chave, rrn, t);
         if(exibir_caminho){
             if(rrn == t->rrn_raiz) {
-                printf("\n", rrn);
-            }
-            else{
-                printf("");
+                printf("\n");
             }
         }
         return retorno;
@@ -1631,29 +1720,29 @@ bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree
 bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_node* node, btree* t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     int index = 0;
-    char* chave_atual;
+    char chave_atual[t->tam_chave+1];
+    int posicao;
 
     for (int lim = node->qtd_chaves; lim > 0 ; lim = lim/2) {
+        posicao = index + lim/2;
         if(exibir_caminho){
             if(lim == node->qtd_chaves){
-                printf("%d", index + lim/2);
+                printf("%d", posicao);
             }
             else{
-                printf(" %d", index + lim/2);
+                printf(" %d", posicao);
             }
-
         }
 
-        if(index + lim/2 >= node->qtd_chaves) {
-            return false;
-        }
+
 //        index += lim/2;
-        chave_atual = node->chaves[index + lim/2];
-        int comp = t->compar(chave, chave_atual);
+        strcpy(chave_atual, node->chaves[posicao]);
+//        chave_atual = node->chaves[posicao];
+        int comp = t->compar(chave, node->chaves[posicao]);
 
         //valor procurado
         if(comp == 0) {
-            *result = lim-1;
+            *result = posicao;
             if(exibir_caminho){
                 printf(")");
             }
@@ -1662,11 +1751,11 @@ bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_no
 
         if(comp > 0) {//move para a direita - valor menor
             index += (lim/2) +1;
-            *result =  lim;
+            *result =  posicao+1;
             lim--;
         }
         else {
-            *result =  lim-1;
+            *result =  posicao;
         }
         //move pra esquerda
     }
@@ -1679,17 +1768,26 @@ bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_no
 bool btree_print_in_order(char *chave_inicio, char *chave_fim, bool (*exibir)(char *chave), int rrn, btree *t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     btree_node no =  btree_read(rrn, t);
+    int n_impressoes = 0;
     for (int i = 0; i <= no.qtd_chaves-1; ++i) {
         if(no.filhos[i] != -1){
-            btree_print_in_order(chave_inicio, chave_fim, exibir, no.filhos[i], t);
+            bool houve_impressao = btree_print_in_order(chave_inicio, chave_fim, exibir, no.filhos[i], t);
+            if(houve_impressao){
+                n_impressoes++;
+            }
         }
         if(chave_inicio == NULL || (t->compar(no.chaves[i], chave_inicio)>=0 && t->compar(no.chaves[i], chave_fim)<= 0)){
             exibir(no.chaves[i]);
+            n_impressoes++;
         }
     }
     if(no.filhos[no.qtd_chaves] != -1){
-        btree_print_in_order(chave_inicio, chave_fim, exibir, no.filhos[no.qtd_chaves], t);
+       return btree_print_in_order(chave_inicio, chave_fim, exibir, no.filhos[no.qtd_chaves], t);
     }
+    if(n_impressoes == 0){
+        return false;
+    }
+    return true;
 }
 
 btree_node btree_read(int rrn, btree *t) {
@@ -1739,7 +1837,6 @@ btree_node btree_read(int rrn, btree *t) {
     return no;
 }
 
-
 void btree_write(btree_node no, btree *t) {
     /* <<< COMPLETE AQUI A IMPLEMENTAÇÃO >>> */
     //criamos a String temporaria para armazena o nó
@@ -1754,7 +1851,7 @@ void btree_write(btree_node no, btree *t) {
     for (int i = 0; i < btree_order-1; ++i) {
         //chave vazia colocamos ####
         if(strlen(no.chaves[i]) == 0) {
-            char vazio[t->tam_chave];
+            char vazio[t->tam_chave+1];
             vazio[0] = '\0';
             strpadright(vazio, '#', t->tam_chave);
             strcat(temp, vazio);
@@ -1843,6 +1940,15 @@ void add_id_jogo_idx() {
 
     sprintf(jogo_str, "%s%04d", j.id_game, qtd_registros_jogos-1);
     btree_insert(jogo_str, &jogos_idx);
+}
+
+void add_compra_idx() {
+    char compra_str[TAM_CHAVE_COMPRAS_IDX + 1];
+
+    Compra c = recuperar_registro_compra(qtd_registros_compras-1);
+
+    sprintf(compra_str, "%s%s%04d",c.id_user_dono, c.id_game, qtd_registros_compras-1);
+    btree_insert(compra_str, &compras_idx);
 }
 
 void add_titulo_idx() {
