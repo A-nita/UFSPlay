@@ -1581,7 +1581,7 @@ promovido_aux btree_insert_aux(char *chave, int rrn, btree *t) {
            a.filho_direito = -1;
            return a;
        }
-
+       btree_node_free(no);
        //folha sem espaço
        return btree_divide(chave, -1, rrn, t);
    }
@@ -1621,10 +1621,13 @@ promovido_aux btree_insert_aux(char *chave, int rrn, btree *t) {
            return a;
        }
        else {
-           return btree_divide(chave, a.filho_direito, no.this_rrn, t);
+           int rrn = no.this_rrn;
+           btree_node_free(no);
+           return btree_divide(chave, a.filho_direito, rrn, t);
        }
    }
    else {
+       btree_node_free(no);
        a.chave_promovida[0] = '\0';
        a.filho_direito = -1;
        return a;
@@ -1814,6 +1817,7 @@ bool btree_print_in_order(char *chave_inicio, char *chave_fim, bool (*exibir)(ch
             n_impressoes++;
         }
     }
+    btree_node_free(no);
     if(n_impressoes == 0){
         return false;
     }
@@ -1831,7 +1835,7 @@ btree_node btree_read(int rrn, btree *t) {
     temp[btree_register_size(t)] = '\0';
 
     strncpy(aux, p, 3);
-    aux[4] = '\0';
+    aux[3] = '\0';//aqui
 
     no.qtd_chaves = atoi(aux);
     p += 3;
